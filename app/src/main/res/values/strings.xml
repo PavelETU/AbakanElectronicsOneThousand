@@ -2,4 +2,6 @@
     <string name="app_name">BluetoothTest</string>
     <string name="pair_new_device">Pair new device</string>
     <string name="connect_hc_05">Connect HC-05</string>
+    <string name="enter_your_command">Enter your command</string>
+    <string name="send_your_command">Send</string>
 </resources>

@@ -28,6 +28,7 @@ class MainViewModel: ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 bluetoothSocket!!.connect()
+                messageToDisplay.emit("Device Connected")
                 val inputStream = bluetoothSocket!!.inputStream
                 var char: Int
                 while (true) {
@@ -41,6 +42,21 @@ class MainViewModel: ViewModel() {
                 }
             } catch (t: Throwable) {
                 messageToDisplay.emit("Error while connecting to the device")
+            }
+        }
+    }
+
+    fun sendCommand(command: String) {
+        if (bluetoothSocket == null) {
+            messageToDisplay.tryEmit("Connect your device first!")
+            return
+        }
+        viewModelScope.launch(Dispatchers.IO) {
+            val outputStream = bluetoothSocket!!.outputStream
+            try {
+                outputStream.write(command.toByteArray())
+            } catch (t: Throwable) {
+                messageToDisplay.emit("Error while sending the command")
             }
         }
     }
