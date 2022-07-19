@@ -12,7 +12,6 @@ import android.media.AudioTrack
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.common.io.ByteSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,9 +24,8 @@ class MainViewModel : ViewModel() {
     private var bluetoothSocket: BluetoothSocket? = null
     private var audioTrack: AudioTrack? = null
     val messageToDisplay = MutableSharedFlow<String>()
-    val outputMessage = MutableStateFlow("")
+    val outputMessage = MutableStateFlow("Device not connected")
 
-    @OptIn(ExperimentalUnsignedTypes::class)
     @SuppressLint("MissingPermission")
     fun connectDevice(bluetoothAdapter: BluetoothAdapter, device: BluetoothDevice) {
         bluetoothAdapter.cancelDiscovery()
@@ -36,14 +34,16 @@ class MainViewModel : ViewModel() {
             AudioAttributes.Builder().setUsage(USAGE_MEDIA).setContentType(CONTENT_TYPE_SPEECH)
                 .build()
         ).setTransferMode(AudioTrack.MODE_STREAM).setAudioFormat(
-            AudioFormat.Builder().setEncoding(AudioFormat.ENCODING_PCM_8BIT).setSampleRate(40000).build()
+            AudioFormat.Builder().setEncoding(AudioFormat.ENCODING_PCM_8BIT).setSampleRate(4000).build()
         )
             .setBufferSizeInBytes(160)
             .build()
         audioTrack!!.play()
         viewModelScope.launch(Dispatchers.IO) {
             try {
+                outputMessage.emit("Connecting ${device.name} device...")
                 bluetoothSocket!!.connect()
+                outputMessage.emit("Device ${device.name} connected")
                 val inputStream = bluetoothSocket!!.inputStream
                 var numberOfByte = 0
                 var overallBytes = 0L
@@ -54,6 +54,7 @@ class MainViewModel : ViewModel() {
                         inputStream.read().toUByte()
                     } catch (t: Throwable) {
                         messageToDisplay.emit("Steam was interrupted")
+                        outputMessage.emit("Device ${device.name} not connected")
                         break
                     }
                     overallBytes++
@@ -64,7 +65,6 @@ class MainViewModel : ViewModel() {
                         seconds = newSeconds
                     }
                     bytes[numberOfByte] = (currentUByte.toInt() - 128).toByte()
-                    Log.i("Look", bytes[numberOfByte].toString())
                     numberOfByte++
                     if (numberOfByte == 160) {
                         audioTrack!!.write(bytes, 0, bytes.size)
@@ -72,6 +72,7 @@ class MainViewModel : ViewModel() {
                     }
                 }
             } catch (t: Throwable) {
+                outputMessage.emit("Device ${device.name} not connected")
                 messageToDisplay.emit("Error while connecting to the device")
             }
         }
