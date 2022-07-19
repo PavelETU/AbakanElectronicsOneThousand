@@ -48,11 +48,14 @@ class MainActivity : AppCompatActivity() {
                 showEnableBluetoothNextTime()
             }
         }
+
     @SuppressLint("MissingPermission")
-    val registerToPairDevice = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
-        val deviceToPair: BluetoothDevice? = it.data?.getParcelableExtra(CompanionDeviceManager.EXTRA_DEVICE)
-        deviceToPair?.createBond()
-    }
+    val registerToPairDevice =
+        registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
+            val deviceToPair: BluetoothDevice? =
+                it.data?.getParcelableExtra(CompanionDeviceManager.EXTRA_DEVICE)
+            deviceToPair?.createBond()
+        }
 
     private fun showEnableBluetoothNextTime() {
         Toast.makeText(this, "Enable bluetooth next time!", Toast.LENGTH_LONG).show()
@@ -73,7 +76,12 @@ class MainActivity : AppCompatActivity() {
             }
         }
         findViewById<Button>(R.id.pair_button).setOnClickListener { pairNewDevice() }
-        findViewById<Button>(R.id.connect).setOnClickListener { viewModel.connectDevice(bluetoothAdapter, device) }
+        findViewById<Button>(R.id.connect).setOnClickListener {
+            viewModel.connectDevice(
+                bluetoothAdapter,
+                device
+            )
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (bluetoothConnectIsGranted() && bluetoothScanIsGranted()) {
                 onBluetoothPermissionsGranted()
@@ -117,23 +125,28 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("MissingPermission")
     private fun onBluetoothEnabled() {
-        device = bluetoothAdapter.bondedDevices.filter { it.name == "HC-05" }[0]
-        findViewById<TextView>(R.id.output).text = bluetoothAdapter.bondedDevices.filter { it.name == "HC-05" }.joinToString {
-            "Name: ${it.name}\nBluetooth Class: ${it.bluetoothClass.majorDeviceClass.toString(16)}\nAddress: ${it.address}\nType: ${it.type}\nBond State: ${it.bondState}\n"
-        }
+        device = bluetoothAdapter.bondedDevices.filter { it.name.contains("ABAKAN") }[0]
     }
 
     private fun pairNewDevice() {
         val pairingRequest =
             AssociationRequest.Builder().addDeviceFilter(BluetoothDeviceFilter.Builder().build())
                 .build()
-        val companionDeviceManager = getSystemService(Context.COMPANION_DEVICE_SERVICE) as CompanionDeviceManager
-        companionDeviceManager.associate(pairingRequest, object : CompanionDeviceManager.Callback() {
-            override fun onDeviceFound(chooserLauncher: IntentSender?) {
-                registerToPairDevice.launch(IntentSenderRequest.Builder(chooserLauncher!!).build())
-            }
-            override fun onFailure(error: CharSequence?) {
-            }
-        }, null)
+        val companionDeviceManager =
+            getSystemService(Context.COMPANION_DEVICE_SERVICE) as CompanionDeviceManager
+        companionDeviceManager.associate(
+            pairingRequest,
+            object : CompanionDeviceManager.Callback() {
+                override fun onDeviceFound(chooserLauncher: IntentSender?) {
+                    registerToPairDevice.launch(
+                        IntentSenderRequest.Builder(chooserLauncher!!).build()
+                    )
+                }
+
+                override fun onFailure(error: CharSequence?) {
+                }
+            },
+            null
+        )
     }
 }
