@@ -15,21 +15,39 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.widget.Button
-import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.ManagedActivityResultLauncher
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.setContent
+import androidx.activity.result.ActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
-import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.lifecycleScope
-import com.example.bluetoothtest.utils.getString
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.bluetoothtest.theme.ComposeMaterial3TestTheme
+import com.example.bluetoothtest.utils.getStringForCompose
+import com.example.bluetoothtest.utils.getStringFromResource
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import java.util.regex.Pattern
 
 @AndroidEntryPoint
-class MainActivity : AppCompatActivity() {
+class MainActivity : ComponentActivity() {
 
     private lateinit var bluetoothAdapter: BluetoothAdapter
     private val viewModel: MainViewModel by viewModels()
@@ -66,30 +84,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        observeViewModel()
-        setUpViews()
         checkBluetoothPermissions()
-    }
-
-    private fun observeViewModel() {
-        lifecycleScope.launchWhenResumed {
-            viewModel.toastMessage.collect {
-                Toast.makeText(this@MainActivity, getString(it), Toast.LENGTH_LONG).show()
-            }
-        }
-        lifecycleScope.launchWhenResumed {
-            viewModel.outputMessage.collect {
-                findViewById<TextView>(R.id.output).text = getString(it)
-            }
-        }
-    }
-
-    private fun setUpViews() {
-        findViewById<Button>(R.id.pair_button).setOnClickListener { pairNewDevice() }
-        findViewById<Button>(R.id.connect).setOnClickListener {
-            viewModel.connectDevice()
-        }
     }
 
     private fun checkBluetoothPermissions() {
@@ -137,31 +132,100 @@ class MainActivity : AppCompatActivity() {
     @SuppressLint("MissingPermission")
     private fun onBluetoothEnabled() {
         viewModel.onBluetoothEnabledOrDeviceBonded(bluetoothAdapter)
+        setContent {
+            ComposeMaterial3TestTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    ControlPanel(bluetoothAdapter)
+                }
+            }
+        }
     }
+}
 
-    private fun pairNewDevice() {
-        val pairingRequest =
-            AssociationRequest.Builder().addDeviceFilter(
-                BluetoothDeviceFilter.Builder().setNamePattern(
-                    Pattern.compile(NAME_OF_THE_DEVICE)
-                ).build()
-            )
-                .build()
-        val companionDeviceManager =
-            getSystemService(Context.COMPANION_DEVICE_SERVICE) as CompanionDeviceManager
-        companionDeviceManager.associate(
-            pairingRequest,
-            object : CompanionDeviceManager.Callback() {
-                override fun onDeviceFound(chooserLauncher: IntentSender?) {
-                    registerToPairDevice.launch(
-                        IntentSenderRequest.Builder(chooserLauncher!!).build()
-                    )
-                }
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ControlPanel(
+    bluetoothAdapter: BluetoothAdapter,
+    viewModel: MainViewModel = viewModel()
+) {
+    val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    scope.launch {
+        viewModel.toastMessage.collect {
+            snackbarHostState.showSnackbar(context.getStringFromResource(it))
+        }
+    }
+    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }, content = {
+        ControlPanelInsideScaffold(bluetoothAdapter, viewModel)
+    })
+}
 
-                override fun onFailure(error: CharSequence?) {
-                }
-            },
-            null
+@Composable
+private fun ControlPanelInsideScaffold(bluetoothAdapter: BluetoothAdapter,
+                                       viewModel: MainViewModel = viewModel()) {
+    val context = LocalContext.current
+    @SuppressLint("MissingPermission")
+    val registerToPairDevice =
+        rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
+            val deviceToPair: BluetoothDevice? =
+                it.data?.getParcelableExtra(CompanionDeviceManager.EXTRA_DEVICE)
+            deviceToPair?.createBond()
+            viewModel.onBluetoothEnabledOrDeviceBonded(bluetoothAdapter)
+        }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        val resourceWithFormatting = viewModel.outputMessage.collectAsState().value
+        Text(text = resourceWithFormatting.getStringForCompose(), Modifier.align(Alignment.Center), textAlign = TextAlign.Center)
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 10.dp)) {
+            Button(onClick = { pairNewDevice(context, registerToPairDevice) },
+                Modifier
+                    .weight(1f)
+                    .padding(8.dp)) {
+                Text(text = stringResource(id = R.string.pair_new_device))
+            }
+            Button(onClick = { viewModel.connectDevice() },
+                Modifier
+                    .weight(1f)
+                    .padding(8.dp)) {
+                Text(text = stringResource(id = R.string.connect))
+            }
+        }
+    }
+}
+
+private fun pairNewDevice(
+    context: Context,
+    registerToPairDevice: ManagedActivityResultLauncher<IntentSenderRequest, ActivityResult>
+) {
+    val pairingRequest =
+        AssociationRequest.Builder().addDeviceFilter(
+            BluetoothDeviceFilter.Builder().setNamePattern(
+                Pattern.compile(NAME_OF_THE_DEVICE)
+            ).build()
         )
-    }
+            .build()
+    val companionDeviceManager =
+        context.getSystemService(Context.COMPANION_DEVICE_SERVICE) as CompanionDeviceManager
+    companionDeviceManager.associate(
+        pairingRequest,
+        object : CompanionDeviceManager.Callback() {
+            override fun onDeviceFound(chooserLauncher: IntentSender?) {
+                registerToPairDevice.launch(
+                    IntentSenderRequest.Builder(chooserLauncher!!).build()
+                )
+            }
+
+            override fun onFailure(error: CharSequence?) {
+            }
+        },
+        null
+    )
 }

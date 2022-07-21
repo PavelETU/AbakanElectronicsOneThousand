@@ -1,6 +1,8 @@
 package com.example.bluetoothtest.utils
 
 import android.content.Context
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import com.example.bluetoothtest.READABLE_NAME_OF_THE_DEVICE
 
 data class ResourceWithFormatting(
@@ -8,7 +10,13 @@ data class ResourceWithFormatting(
     val formattingString: String? = READABLE_NAME_OF_THE_DEVICE
 )
 
-fun Context.getString(resourceWithFormatting: ResourceWithFormatting): String =
+fun Context.getStringFromResource(resourceWithFormatting: ResourceWithFormatting): String =
     resourceWithFormatting.formattingString?.run {
         getString(resourceWithFormatting.resource, resourceWithFormatting.formattingString)
     } ?: getString(resourceWithFormatting.resource)
+
+@Composable
+fun ResourceWithFormatting.getStringForCompose(): String =
+    formattingString?.run {
+        stringResource(resource, formattingString)
+    } ?: stringResource(resource)
