@@ -19,18 +19,19 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.flow.collect
+import dagger.hilt.android.AndroidEntryPoint
+import java.util.regex.Pattern
 
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
     private lateinit var bluetoothAdapter: BluetoothAdapter
-    private lateinit var device: BluetoothDevice
-    private lateinit var viewModel: MainViewModel
+    private val viewModel: MainViewModel by viewModels()
 
     private val registerToGrantPermission =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
@@ -55,6 +56,7 @@ class MainActivity : AppCompatActivity() {
             val deviceToPair: BluetoothDevice? =
                 it.data?.getParcelableExtra(CompanionDeviceManager.EXTRA_DEVICE)
             deviceToPair?.createBond()
+            viewModel.onBluetoothEnabledOrDeviceBonded(bluetoothAdapter)
         }
 
     private fun showEnableBluetoothNextTime() {
@@ -64,9 +66,14 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        viewModel = ViewModelProvider(this)[MainViewModel::class.java]
+        observeViewModel()
+        setUpViews()
+        checkBluetoothPermissions()
+    }
+
+    private fun observeViewModel() {
         lifecycleScope.launchWhenResumed {
-            viewModel.messageToDisplay.collect {
+            viewModel.toastMessage.collect {
                 Toast.makeText(this@MainActivity, it, Toast.LENGTH_LONG).show()
             }
         }
@@ -75,13 +82,16 @@ class MainActivity : AppCompatActivity() {
                 findViewById<TextView>(R.id.output).text = it
             }
         }
+    }
+
+    private fun setUpViews() {
         findViewById<Button>(R.id.pair_button).setOnClickListener { pairNewDevice() }
         findViewById<Button>(R.id.connect).setOnClickListener {
-            viewModel.connectDevice(
-                bluetoothAdapter,
-                device
-            )
+            viewModel.connectDevice()
         }
+    }
+
+    private fun checkBluetoothPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (bluetoothConnectIsGranted() && bluetoothScanIsGranted()) {
                 onBluetoothPermissionsGranted()
@@ -125,12 +135,16 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("MissingPermission")
     private fun onBluetoothEnabled() {
-        device = bluetoothAdapter.bondedDevices.filter { it.name.contains("ABAKAN") }[0]
+        viewModel.onBluetoothEnabledOrDeviceBonded(bluetoothAdapter)
     }
 
     private fun pairNewDevice() {
         val pairingRequest =
-            AssociationRequest.Builder().addDeviceFilter(BluetoothDeviceFilter.Builder().build())
+            AssociationRequest.Builder().addDeviceFilter(
+                BluetoothDeviceFilter.Builder().setNamePattern(
+                    Pattern.compile(NAME_OF_THE_DEVICE)
+                ).build()
+            )
                 .build()
         val companionDeviceManager =
             getSystemService(Context.COMPANION_DEVICE_SERVICE) as CompanionDeviceManager

@@ -2,44 +2,56 @@ package com.example.bluetoothtest
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
-import android.media.AudioAttributes
-import android.media.AudioAttributes.CONTENT_TYPE_SPEECH
-import android.media.AudioAttributes.USAGE_MEDIA
-import android.media.AudioFormat
 import android.media.AudioTrack
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import java.util.*
+import javax.inject.Inject
 
-private val MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
-
-class MainViewModel : ViewModel() {
+@SuppressLint("MissingPermission")
+@HiltViewModel
+class MainViewModel @Inject constructor(
+    private val audioTrackProvider: AudioTrackProvider
+) : ViewModel() {
+    private var bluetoothAdapter: BluetoothAdapter? = null
     private var bluetoothSocket: BluetoothSocket? = null
     private var audioTrack: AudioTrack? = null
-    val messageToDisplay = MutableSharedFlow<String>()
+    val toastMessage = MutableSharedFlow<String>()
     val outputMessage = MutableStateFlow("Device not connected")
 
-    @SuppressLint("MissingPermission")
-    fun connectDevice(bluetoothAdapter: BluetoothAdapter, device: BluetoothDevice) {
-        bluetoothAdapter.cancelDiscovery()
-        bluetoothSocket = device.createRfcommSocketToServiceRecord(MY_UUID)
-        audioTrack = AudioTrack.Builder().setAudioAttributes(
-            AudioAttributes.Builder().setUsage(USAGE_MEDIA).setContentType(CONTENT_TYPE_SPEECH)
-                .build()
-        ).setTransferMode(AudioTrack.MODE_STREAM).setAudioFormat(
-            AudioFormat.Builder().setEncoding(AudioFormat.ENCODING_PCM_8BIT).setSampleRate(4000).build()
-        )
-            .setBufferSizeInBytes(160)
-            .build()
-        audioTrack!!.play()
-        viewModelScope.launch(Dispatchers.IO) {
+    fun onBluetoothEnabledOrDeviceBonded(bluetoothAdapter: BluetoothAdapter) {
+        this.bluetoothAdapter = bluetoothAdapter
+        if (bluetoothAdapter.bondedDevices.none { it.name.contains(NAME_OF_THE_DEVICE) }) {
+            outputMessage.tryEmit("You don't have any $READABLE_NAME_OF_THE_DEVICE devices paired. Turn on the device and click Pair New Device")
+        } else {
+            outputMessage.tryEmit("$READABLE_NAME_OF_THE_DEVICE ready to connect. Turn the device on and click Connect")
+        }
+    }
+
+    fun connectDevice(ioDispatcher: CoroutineDispatcher = Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
+            if (bluetoothAdapter == null) {
+                toastMessage.emit("Bluetooth was not enabled. Restart the app and accept all permissions and turn Bluetooth on")
+                return@launch
+            }
+            bluetoothAdapter!!.cancelDiscovery()
+            val device =
+                bluetoothAdapter!!.bondedDevices.filter { it.name.contains(NAME_OF_THE_DEVICE) }
+                    .getOrNull(0)
+            if (device == null) {
+                toastMessage.emit("No $READABLE_NAME_OF_THE_DEVICE device found")
+                return@launch
+            }
+            prepareAudioTrack()
+            bluetoothSocket =
+                device.createRfcommSocketToServiceRecord(DEFAULT_UUID_FOR_CUSTOM_DEVICES)
             try {
                 outputMessage.emit("Connecting ${device.name} device...")
                 bluetoothSocket!!.connect()
@@ -53,7 +65,7 @@ class MainViewModel : ViewModel() {
                     val currentUByte = try {
                         inputStream.read().toUByte()
                     } catch (t: Throwable) {
-                        messageToDisplay.emit("Steam was interrupted")
+                        toastMessage.emit("Steam was interrupted")
                         outputMessage.emit("Device ${device.name} not connected")
                         break
                     }
@@ -73,9 +85,14 @@ class MainViewModel : ViewModel() {
                 }
             } catch (t: Throwable) {
                 outputMessage.emit("Device ${device.name} not connected")
-                messageToDisplay.emit("Error while connecting to the device")
+                toastMessage.emit("Error while connecting to the device")
             }
         }
+    }
+
+    private fun prepareAudioTrack() {
+        audioTrack = audioTrackProvider.getAudioTrack()
+        audioTrack!!.play()
     }
 
     override fun onCleared() {
