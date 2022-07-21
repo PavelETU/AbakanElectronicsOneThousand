@@ -69,15 +69,6 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-    @SuppressLint("MissingPermission")
-    val registerToPairDevice =
-        registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
-            val deviceToPair: BluetoothDevice? =
-                it.data?.getParcelableExtra(CompanionDeviceManager.EXTRA_DEVICE)
-            deviceToPair?.createBond()
-            viewModel.onBluetoothEnabledOrDeviceBonded(bluetoothAdapter)
-        }
-
     private fun showEnableBluetoothNextTime() {
         Toast.makeText(this, getString(R.string.enable_bluetooth_next_time), Toast.LENGTH_LONG).show()
     }
