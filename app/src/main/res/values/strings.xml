@@ -2,4 +2,15 @@
     <string name="app_name">BluetoothTest</string>
     <string name="pair_new_device">Pair new device</string>
     <string name="connect">Connect</string>
+    <string name="no_device_paired">You don\'t have any %1$s devices paired. Turn on the device
+        and click Pair New Device</string>
+    <string name="ready_to_connect">%1$s ready to connect. Turn the device on and click Connect</string>
+    <string name="bluetooth_was_not_enabled">Bluetooth was not enabled. Restart the app and accept all permissions and turn Bluetooth on</string>
+    <string name="no_device_found">No %1$s device found</string>
+    <string name="error_while_connecting">Error while connecting to the device</string>
+    <string name="device_not_connected">"Device %1$s not connected</string>
+    <string name="stream_was_interrupted">Stream was interrupted</string>
+    <string name="connecting_device">Connecting %1$s device…</string>
+    <string name="device_connected">Device %1$s connected</string>
+    <string name="enable_bluetooth_next_time">Enable bluetooth next time!</string>
 </resources>

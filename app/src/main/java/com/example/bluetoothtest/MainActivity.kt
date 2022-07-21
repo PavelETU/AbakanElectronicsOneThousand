@@ -24,6 +24,7 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import com.example.bluetoothtest.utils.getString
 import dagger.hilt.android.AndroidEntryPoint
 import java.util.regex.Pattern
 
@@ -60,7 +61,7 @@ class MainActivity : AppCompatActivity() {
         }
 
     private fun showEnableBluetoothNextTime() {
-        Toast.makeText(this, "Enable bluetooth next time!", Toast.LENGTH_LONG).show()
+        Toast.makeText(this, getString(R.string.enable_bluetooth_next_time), Toast.LENGTH_LONG).show()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -74,12 +75,12 @@ class MainActivity : AppCompatActivity() {
     private fun observeViewModel() {
         lifecycleScope.launchWhenResumed {
             viewModel.toastMessage.collect {
-                Toast.makeText(this@MainActivity, it, Toast.LENGTH_LONG).show()
+                Toast.makeText(this@MainActivity, getString(it), Toast.LENGTH_LONG).show()
             }
         }
         lifecycleScope.launchWhenResumed {
             viewModel.outputMessage.collect {
-                findViewById<TextView>(R.id.output).text = it
+                findViewById<TextView>(R.id.output).text = getString(it)
             }
         }
     }

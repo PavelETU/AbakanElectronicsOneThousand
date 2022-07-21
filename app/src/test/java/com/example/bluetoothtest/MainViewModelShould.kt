@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
 import android.media.AudioTrack
 import app.cash.turbine.test
+import com.example.bluetoothtest.utils.ResourceWithFormatting
 import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
@@ -45,7 +46,7 @@ class MainViewModelShould {
         viewModel.onBluetoothEnabledOrDeviceBonded(bluetoothAdapter)
         assertThat(
             viewModel.outputMessage.first(),
-            `is`("You don't have any $READABLE_NAME_OF_THE_DEVICE devices paired. Turn on the device and click Pair New Device")
+            `is`(ResourceWithFormatting(R.string.no_device_paired))
         )
     }
 
@@ -58,7 +59,7 @@ class MainViewModelShould {
             viewModel.onBluetoothEnabledOrDeviceBonded(bluetoothAdapter)
             assertThat(
                 viewModel.outputMessage.first(),
-                `is`("You don't have any $READABLE_NAME_OF_THE_DEVICE devices paired. Turn on the device and click Pair New Device")
+                `is`(ResourceWithFormatting(R.string.no_device_paired))
             )
         }
 
@@ -69,7 +70,7 @@ class MainViewModelShould {
             viewModel.onBluetoothEnabledOrDeviceBonded(bluetoothAdapter)
             assertThat(
                 viewModel.outputMessage.first(),
-                `is`("$READABLE_NAME_OF_THE_DEVICE ready to connect. Turn the device on and click Connect")
+                `is`(ResourceWithFormatting(R.string.ready_to_connect))
             )
         }
 
@@ -78,7 +79,7 @@ class MainViewModelShould {
         viewModel.connectDevice()
         assertThat(
             viewModel.toastMessage.first(),
-            `is`("Bluetooth was not enabled. Restart the app and accept all permissions and turn Bluetooth on")
+            `is`(ResourceWithFormatting(R.string.bluetooth_was_not_enabled, null))
         )
     }
 
@@ -94,7 +95,7 @@ class MainViewModelShould {
     fun `show no device found message given no device found`() = runTest {
         viewModel.onBluetoothEnabledOrDeviceBonded(bluetoothAdapter)
         viewModel.connectDevice()
-        assertThat(viewModel.toastMessage.first(), `is`("No $READABLE_NAME_OF_THE_DEVICE device found"))
+        assertThat(viewModel.toastMessage.first(), `is`(ResourceWithFormatting(R.string.no_device_found)))
     }
 
     @Test
@@ -108,8 +109,8 @@ class MainViewModelShould {
         viewModel.onBluetoothEnabledOrDeviceBonded(bluetoothAdapter)
         viewModel.connectDevice(StandardTestDispatcher(testScheduler))
 
-        assertThat(viewModel.toastMessage.first(), `is`("Error while connecting to the device"))
-        assertThat(viewModel.outputMessage.first(), `is`("Device $NAME_OF_THE_DEVICE not connected"))
+        assertThat(viewModel.toastMessage.first(), `is`(ResourceWithFormatting(R.string.error_while_connecting, null)))
+        assertThat(viewModel.outputMessage.first(), `is`(ResourceWithFormatting(R.string.device_not_connected)))
     }
 
     @Test
@@ -125,10 +126,10 @@ class MainViewModelShould {
         viewModel.connectDevice(StandardTestDispatcher(testScheduler))
 
         viewModel.outputMessage.test {
-            assertThat(awaitItem(), `is`("$READABLE_NAME_OF_THE_DEVICE ready to connect. Turn the device on and click Connect"))
-            assertThat(awaitItem(), `is`("Connecting $NAME_OF_THE_DEVICE device..."))
-            assertThat(awaitItem(), `is`("Device $NAME_OF_THE_DEVICE connected"))
-            assertThat(awaitItem(), `is`("Device $NAME_OF_THE_DEVICE not connected"))
+            assertThat(awaitItem(), `is`(ResourceWithFormatting(R.string.ready_to_connect)))
+            assertThat(awaitItem(), `is`(ResourceWithFormatting(R.string.connecting_device)))
+            assertThat(awaitItem(), `is`(ResourceWithFormatting(R.string.device_connected)))
+            assertThat(awaitItem(), `is`(ResourceWithFormatting(R.string.device_not_connected)))
         }
     }
 

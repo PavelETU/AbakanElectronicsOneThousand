@@ -7,6 +7,7 @@ import android.media.AudioTrack
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.bluetoothtest.utils.ResourceWithFormatting
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -23,22 +24,24 @@ class MainViewModel @Inject constructor(
     private var bluetoothAdapter: BluetoothAdapter? = null
     private var bluetoothSocket: BluetoothSocket? = null
     private var audioTrack: AudioTrack? = null
-    val toastMessage = MutableSharedFlow<String>()
-    val outputMessage = MutableStateFlow("Device not connected")
+    val toastMessage = MutableSharedFlow<ResourceWithFormatting>()
+    val outputMessage = MutableStateFlow(ResourceWithFormatting(R.string.app_name, " for $READABLE_NAME_OF_THE_DEVICE"))
 
     fun onBluetoothEnabledOrDeviceBonded(bluetoothAdapter: BluetoothAdapter) {
         this.bluetoothAdapter = bluetoothAdapter
         if (bluetoothAdapter.bondedDevices.none { it.name.contains(NAME_OF_THE_DEVICE) }) {
-            outputMessage.tryEmit("You don't have any $READABLE_NAME_OF_THE_DEVICE devices paired. Turn on the device and click Pair New Device")
+            outputMessage.tryEmit(ResourceWithFormatting(R.string.no_device_paired, READABLE_NAME_OF_THE_DEVICE))
         } else {
-            outputMessage.tryEmit("$READABLE_NAME_OF_THE_DEVICE ready to connect. Turn the device on and click Connect")
+            outputMessage.tryEmit(ResourceWithFormatting(R.string.ready_to_connect, READABLE_NAME_OF_THE_DEVICE))
         }
     }
 
+    // Suppress warning since Android Studio doesn't know ioDispatcher is always ioDispatcher when running the app
+    @Suppress("BlockingMethodInNonBlockingContext")
     fun connectDevice(ioDispatcher: CoroutineDispatcher = Dispatchers.IO) {
         viewModelScope.launch(ioDispatcher) {
             if (bluetoothAdapter == null) {
-                toastMessage.emit("Bluetooth was not enabled. Restart the app and accept all permissions and turn Bluetooth on")
+                toastMessage.emit(ResourceWithFormatting(R.string.bluetooth_was_not_enabled, null))
                 return@launch
             }
             bluetoothAdapter!!.cancelDiscovery()
@@ -46,16 +49,16 @@ class MainViewModel @Inject constructor(
                 bluetoothAdapter!!.bondedDevices.filter { it.name.contains(NAME_OF_THE_DEVICE) }
                     .getOrNull(0)
             if (device == null) {
-                toastMessage.emit("No $READABLE_NAME_OF_THE_DEVICE device found")
+                toastMessage.emit(ResourceWithFormatting(R.string.no_device_found))
                 return@launch
             }
             prepareAudioTrack()
             bluetoothSocket =
                 device.createRfcommSocketToServiceRecord(DEFAULT_UUID_FOR_CUSTOM_DEVICES)
             try {
-                outputMessage.emit("Connecting ${device.name} device...")
+                outputMessage.emit(ResourceWithFormatting(R.string.connecting_device))
                 bluetoothSocket!!.connect()
-                outputMessage.emit("Device ${device.name} connected")
+                outputMessage.emit(ResourceWithFormatting(R.string.device_connected))
                 val inputStream = bluetoothSocket!!.inputStream
                 var numberOfByte = 0
                 var overallBytes = 0L
@@ -65,8 +68,8 @@ class MainViewModel @Inject constructor(
                     val currentUByte = try {
                         inputStream.read().toUByte()
                     } catch (t: Throwable) {
-                        toastMessage.emit("Steam was interrupted")
-                        outputMessage.emit("Device ${device.name} not connected")
+                        toastMessage.emit(ResourceWithFormatting(R.string.stream_was_interrupted, null))
+                        outputMessage.emit(ResourceWithFormatting(R.string.device_not_connected))
                         break
                     }
                     overallBytes++
@@ -84,8 +87,8 @@ class MainViewModel @Inject constructor(
                     }
                 }
             } catch (t: Throwable) {
-                outputMessage.emit("Device ${device.name} not connected")
-                toastMessage.emit("Error while connecting to the device")
+                outputMessage.emit(ResourceWithFormatting(R.string.device_not_connected))
+                toastMessage.emit(ResourceWithFormatting(R.string.error_while_connecting, null))
             }
         }
     }
