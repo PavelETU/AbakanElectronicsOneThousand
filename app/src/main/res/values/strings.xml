@@ -14,4 +14,9 @@
     <string name="device_connected">Device %1$s connected</string>
     <string name="enable_bluetooth_next_time">Enable bluetooth next time!</string>
     <string name="grant_bluetooth_permissions">This app is built around bluetooth. Please grant all permissions and restart the app</string>
+    <string name="record">Record</string>
+    <string name="stop_recording">Stop recording</string>
+    <string name="error_while_saving">Error while recording</string>
+    <string name="recording_started">Recording started…</string>
+    <string name="recording_completed">Recording completed</string>
 </resources>

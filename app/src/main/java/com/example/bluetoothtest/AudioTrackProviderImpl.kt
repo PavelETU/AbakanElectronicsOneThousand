@@ -9,7 +9,7 @@ class AudioTrackProviderImpl @Inject constructor(): AudioTrackProvider {
     override fun getAudioTrack(): AudioTrack {
         return AudioTrack.Builder().setAudioAttributes(
             AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).setContentType(
-                AudioAttributes.CONTENT_TYPE_SPEECH
+                AudioAttributes.CONTENT_TYPE_MUSIC
             )
                 .build()
         ).setTransferMode(AudioTrack.MODE_STREAM).setAudioFormat(

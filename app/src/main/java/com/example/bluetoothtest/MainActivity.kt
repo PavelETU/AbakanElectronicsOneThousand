@@ -14,7 +14,6 @@ import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.widget.Button
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.ManagedActivityResultLauncher
@@ -27,12 +26,12 @@ import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.VerticalAlignmentLine
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -122,7 +121,6 @@ class MainActivity : ComponentActivity() {
 
     @SuppressLint("MissingPermission")
     private fun onBluetoothEnabled() {
-        viewModel.onBluetoothEnabledOrDeviceBonded(bluetoothAdapter)
         setContent {
             ComposeMaterial3TestTheme {
                 Surface(
@@ -145,6 +143,11 @@ private fun ControlPanel(
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    var onBluetoothEnabledCalled by rememberSaveable { mutableStateOf(false) }
+    if (!onBluetoothEnabledCalled) {
+        viewModel.onBluetoothEnabledOrDeviceBonded(bluetoothAdapter)
+        onBluetoothEnabledCalled = true
+    }
     scope.launch {
         viewModel.toastMessage.collect {
             snackbarHostState.showSnackbar(context.getStringFromResource(it))
@@ -171,6 +174,15 @@ private fun ControlPanelInsideScaffold(bluetoothAdapter: BluetoothAdapter,
     Box(modifier = Modifier.fillMaxSize()) {
         val resourceWithFormatting = viewModel.outputMessage.collectAsState().value
         Text(text = resourceWithFormatting.getStringForCompose(), Modifier.align(Alignment.Center), textAlign = TextAlign.Center)
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .align(Alignment.TopCenter)
+                .padding(top = 20.dp), horizontalArrangement = Arrangement.Center) {
+            Button(onClick = { viewModel.startStopRecording(context.filesDir) }) {
+                Text(text = stringResource(id = R.string.record))
+            }
+        }
         Row(
             Modifier
                 .fillMaxWidth()
