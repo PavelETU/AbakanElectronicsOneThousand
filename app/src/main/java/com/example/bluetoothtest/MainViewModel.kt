@@ -13,7 +13,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -29,7 +28,8 @@ class MainViewModel @Inject constructor(
     private var bluetoothAdapter: BluetoothAdapter? = null
     private var bluetoothSocket: BluetoothSocket? = null
     private var audioTrack: AudioTrack? = null
-    private val audioChannel = Channel<UByte>(CONFLATED)
+    private val audioChannel = Channel<UByte>(4000)
+    private var recording = false
     val toastMessage = MutableSharedFlow<ResourceWithFormatting>()
     val outputMessage = MutableStateFlow(ResourceWithFormatting(R.string.app_name, " for $READABLE_NAME_OF_THE_DEVICE"))
 
@@ -78,7 +78,9 @@ class MainViewModel @Inject constructor(
                         outputMessage.emit(ResourceWithFormatting(R.string.device_not_connected))
                         break
                     }
-                    audioChannel.send(currentUByte)
+                    if (recording) {
+                        audioChannel.send(currentUByte)
+                    }
                     overallBytes++
                     val newSeconds = System.currentTimeMillis() / 1000
                     if (newSeconds > seconds) {
@@ -90,11 +92,6 @@ class MainViewModel @Inject constructor(
                     numberOfByte++
                     if (numberOfByte == 160) {
                         audioTrack!!.write(bytes, 0, bytes.size)
-                        if (outputMessage.value == ResourceWithFormatting(R.string.recording_started, null)) {
-//                            Log.i(
-//                                "PrintOut",
-//                                "bytes to audioTrack " + bytes.joinToString { it.toString() })
-                        }
                         numberOfByte = 0
                     }
                 }
@@ -113,6 +110,7 @@ class MainViewModel @Inject constructor(
     fun startStopRecording(dir: File) {
         viewModelScope.launch(Dispatchers.IO) {
             outputMessage.emit(ResourceWithFormatting(R.string.recording_started, null))
+            recording = true
             var amountOfBytes = 0
             val dataByteArray = ByteArray(BYTES_TO_RECORD)
             while (amountOfBytes < BYTES_TO_RECORD) {
@@ -120,6 +118,7 @@ class MainViewModel @Inject constructor(
                 dataByteArray[amountOfBytes] = receive.toByte()
                 amountOfBytes++
             }
+            recording = false
             val wavByteArray = HeaderForWavFile.getHeaderForWavFile() + dataByteArray
             try {
                 val file = File(dir, "BluetoothMusic${System.currentTimeMillis() / 1000}.wav")

@@ -1,6 +1,7 @@
 package com.example.bluetoothtest.utils
 
 import com.example.bluetoothtest.BYTES_TO_RECORD
+import com.example.bluetoothtest.SAMPLE_RATE
 
 object HeaderForWavFile {
     fun getHeaderForWavFile(): ByteArray {
@@ -25,15 +26,15 @@ object HeaderForWavFile {
         numChannel[0] = 1
         numChannel[1] = 0
         val sampleRate = ByteArray(4)
-        sampleRate[0] = (4000 shr 0).toByte()
-        sampleRate[1] = (4000 shr 8).toByte()
-        sampleRate[2] = (4000 shr 16).toByte()
-        sampleRate[3] = (4000 shr 24).toByte()
+        sampleRate[0] = ( (SAMPLE_RATE*2) shr 0).toByte()
+        sampleRate[1] = ( (SAMPLE_RATE*2) shr 8).toByte()
+        sampleRate[2] = ( (SAMPLE_RATE*2) shr 16).toByte()
+        sampleRate[3] = ( (SAMPLE_RATE*2) shr 24).toByte()
         val byteRate = ByteArray(4)
-        byteRate[0] = (4000 shr 0).toByte()
-        byteRate[1] = (4000 shr 8).toByte()
-        byteRate[2] = (4000 shr 16).toByte()
-        byteRate[3] = (4000 shr 24).toByte()
+        byteRate[0] = ( (SAMPLE_RATE*2) shr 0).toByte()
+        byteRate[1] = ( (SAMPLE_RATE*2) shr 8).toByte()
+        byteRate[2] = ( (SAMPLE_RATE*2) shr 16).toByte()
+        byteRate[3] = ( (SAMPLE_RATE*2) shr 24).toByte()
         val blockAlign = ByteArray(2)
         blockAlign[0] = 1
         blockAlign[1] = 0

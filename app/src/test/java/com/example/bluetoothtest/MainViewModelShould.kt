@@ -134,7 +134,7 @@ class MainViewModelShould {
     }
 
     @Test
-    fun `write 160 bytes from BluetoothSocket into audioTrack with values negated by 128 given connection is established`() = runTest {
+    fun `write 160 bytes from BluetoothSocket into audioTrack given connection is established`() = runTest {
         val socket = mockk<BluetoothSocket>()
         val inputStream: InputStream = mockk(relaxed = true)
         val audioTrack: AudioTrack = mockk(relaxed = true)
@@ -143,7 +143,7 @@ class MainViewModelShould {
         every { audioTrackProvider.getAudioTrack() } returns mockk(relaxed = true)
         every { socket.connect() } returns Unit
         every { socket.inputStream } returns inputStream
-        every { inputStream.read() } returns 128
+        every { inputStream.read() } returns 0
         every { audioTrackProvider.getAudioTrack() } returns audioTrack
 
         viewModel.onBluetoothEnabledOrDeviceBonded(bluetoothAdapter)
