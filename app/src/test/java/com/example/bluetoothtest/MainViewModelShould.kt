@@ -150,8 +150,8 @@ class MainViewModelShould {
         viewModel.connectDevice(StandardTestDispatcher(testScheduler))
 
         advanceUntilIdle()
-        val byteArray = ByteArray(160) { 0 }
-        verify { audioTrack.write(byteArray, 0,160) }
+        val byteArray = ByteArray(128) { 0 }
+        verify { audioTrack.write(byteArray, 0,128) }
     }
 
     private fun addMyDeviceToBondedDevices() {

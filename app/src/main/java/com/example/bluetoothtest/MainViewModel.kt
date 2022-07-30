@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bluetoothtest.utils.HeaderForWavFile
 import com.example.bluetoothtest.utils.ResourceWithFormatting
+import com.example.bluetoothtest.utils.shiftValuesByZeroOffset
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -21,6 +22,7 @@ import java.io.File
 import java.io.FileOutputStream
 import javax.inject.Inject
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @SuppressLint("MissingPermission")
 @HiltViewModel
 class MainViewModel @Inject constructor(
@@ -29,8 +31,9 @@ class MainViewModel @Inject constructor(
     private var bluetoothAdapter: BluetoothAdapter? = null
     private var bluetoothSocket: BluetoothSocket? = null
     private var audioTrack: AudioTrack? = null
-    private val audioChannel = Channel<UByte>(40000)
+    private val audioChannel = Channel<ByteArray>(4000)
     private var recording = false
+    private var shouldSendBytesForRecord = false
     val toastMessage = MutableSharedFlow<ResourceWithFormatting>()
     val outputMessage = MutableStateFlow(ResourceWithFormatting(R.string.app_name, " for $READABLE_NAME_OF_THE_DEVICE"))
     val recordingButtonResource = MutableStateFlow(R.string.record)
@@ -68,20 +71,19 @@ class MainViewModel @Inject constructor(
                 bluetoothSocket!!.connect()
                 outputMessage.emit(ResourceWithFormatting(R.string.device_connected))
                 val inputStream = bluetoothSocket!!.inputStream
-                var numberOfByte = 0
                 var overallBytes = 0L
-                val bytes = ByteArray(160)
+                val bytes = ByteArray(128)
                 var seconds = System.currentTimeMillis() / 1000
                 while (true) {
-                    val currentUByte = try {
-                        inputStream.read().toUByte()
+                    try {
+                        inputStream.read(bytes)
                     } catch (t: Throwable) {
                         toastMessage.emit(ResourceWithFormatting(R.string.stream_was_interrupted, null))
                         outputMessage.emit(ResourceWithFormatting(R.string.device_not_connected))
                         break
                     }
-                    if (recording) {
-                        audioChannel.send(currentUByte)
+                    if (shouldSendBytesForRecord) {
+                        audioChannel.send(bytes.copyOf())
                     }
                     overallBytes++
                     val newSeconds = System.currentTimeMillis() / 1000
@@ -90,12 +92,7 @@ class MainViewModel @Inject constructor(
                         overallBytes = 0
                         seconds = newSeconds
                     }
-                    bytes[numberOfByte] = currentUByte.toByte()
-                    numberOfByte++
-                    if (numberOfByte == 160) {
-                        audioTrack!!.write(bytes, 0, bytes.size)
-                        numberOfByte = 0
-                    }
+                    audioTrack!!.write(bytes, 0, bytes.size)
                 }
             } catch (t: Throwable) {
                 outputMessage.emit(ResourceWithFormatting(R.string.device_not_connected))
@@ -119,17 +116,20 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     private fun startRecording(dir: File) {
         viewModelScope.launch(Dispatchers.IO) {
             outputMessage.emit(ResourceWithFormatting(R.string.recording_started, null))
             recording = true
+            shouldSendBytesForRecord = true
             var amountOfBytes = 0
             var dataByteArray = ByteArray(0)
             while (recording || (!recording && !audioChannel.isEmpty)) {
-                val receive = audioChannel.receive().toInt() - ZERO_OFFSET
-                dataByteArray += receive.toByte()
-                amountOfBytes++
+                val newByteArray = audioChannel.receive()
+                dataByteArray += newByteArray.shiftValuesByZeroOffset()
+                amountOfBytes += newByteArray.size
+                if (!recording) {
+                    shouldSendBytesForRecord = false
+                }
             }
             val wavByteArray = HeaderForWavFile.getHeaderForWavFile(amountOfBytes) + dataByteArray
             try {
