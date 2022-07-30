@@ -12,6 +12,7 @@ import com.example.bluetoothtest.utils.ResourceWithFormatting
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,10 +29,11 @@ class MainViewModel @Inject constructor(
     private var bluetoothAdapter: BluetoothAdapter? = null
     private var bluetoothSocket: BluetoothSocket? = null
     private var audioTrack: AudioTrack? = null
-    private val audioChannel = Channel<UByte>(4000)
+    private val audioChannel = Channel<UByte>(40000)
     private var recording = false
     val toastMessage = MutableSharedFlow<ResourceWithFormatting>()
     val outputMessage = MutableStateFlow(ResourceWithFormatting(R.string.app_name, " for $READABLE_NAME_OF_THE_DEVICE"))
+    val recordingButtonResource = MutableStateFlow(R.string.record)
 
     fun onBluetoothEnabledOrDeviceBonded(bluetoothAdapter: BluetoothAdapter) {
         this.bluetoothAdapter = bluetoothAdapter
@@ -108,18 +110,28 @@ class MainViewModel @Inject constructor(
     }
 
     fun startStopRecording(dir: File) {
+        if (recording) {
+            recording = false
+            recordingButtonResource.tryEmit(R.string.record)
+        } else {
+            recordingButtonResource.tryEmit(R.string.stop_recording)
+            startRecording(dir)
+        }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun startRecording(dir: File) {
         viewModelScope.launch(Dispatchers.IO) {
             outputMessage.emit(ResourceWithFormatting(R.string.recording_started, null))
             recording = true
             var amountOfBytes = 0
-            val dataByteArray = ByteArray(BYTES_TO_RECORD)
-            while (amountOfBytes < BYTES_TO_RECORD) {
+            var dataByteArray = ByteArray(0)
+            while (recording || (!recording && !audioChannel.isEmpty)) {
                 val receive = audioChannel.receive().toInt() - ZERO_OFFSET
-                dataByteArray[amountOfBytes] = receive.toByte()
+                dataByteArray += receive.toByte()
                 amountOfBytes++
             }
-            recording = false
-            val wavByteArray = HeaderForWavFile.getHeaderForWavFile() + dataByteArray
+            val wavByteArray = HeaderForWavFile.getHeaderForWavFile(amountOfBytes) + dataByteArray
             try {
                 val file = File(dir, "BluetoothMusic${System.currentTimeMillis() / 1000}.wav")
                 val fileOutputStream = FileOutputStream(file)

@@ -1,12 +1,11 @@
 package com.example.bluetoothtest.utils
 
-import com.example.bluetoothtest.BYTES_TO_RECORD
 import com.example.bluetoothtest.SAMPLE_RATE
 
 object HeaderForWavFile {
-    fun getHeaderForWavFile(): ByteArray {
+    fun getHeaderForWavFile(amountOfBytesRecorded: Int): ByteArray {
         val chunkID = "RIFF".toByteArray()
-        val amountOfBytesForChunkSize = 36 + BYTES_TO_RECORD
+        val amountOfBytesForChunkSize = 36 + amountOfBytesRecorded
         val chunkSize = ByteArray(4)
         chunkSize[0] = (amountOfBytesForChunkSize shr 0).toByte()
         chunkSize[1] = (amountOfBytesForChunkSize shr 8).toByte()
@@ -43,10 +42,10 @@ object HeaderForWavFile {
         bitsPerSample[1] = 0
         val subChunk2Id = "data".toByteArray()
         val subChunk2Size = ByteArray(4)
-        subChunk2Size[0] = (BYTES_TO_RECORD shr 0).toByte()
-        subChunk2Size[1] = (BYTES_TO_RECORD shr 8).toByte()
-        subChunk2Size[2] = (BYTES_TO_RECORD shr 16).toByte()
-        subChunk2Size[3] = (BYTES_TO_RECORD shr 24).toByte()
+        subChunk2Size[0] = (amountOfBytesRecorded shr 0).toByte()
+        subChunk2Size[1] = (amountOfBytesRecorded shr 8).toByte()
+        subChunk2Size[2] = (amountOfBytesRecorded shr 16).toByte()
+        subChunk2Size[3] = (amountOfBytesRecorded shr 24).toByte()
         return chunkID + chunkSize + format + subchunk1Id + subchunk1Size +
                 audioFormat + numChannel + sampleRate + byteRate + blockAlign + bitsPerSample +
                 subChunk2Id + subChunk2Size

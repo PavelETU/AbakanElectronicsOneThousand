@@ -180,7 +180,7 @@ private fun ControlPanelInsideScaffold(bluetoothAdapter: BluetoothAdapter,
                 .align(Alignment.TopCenter)
                 .padding(top = 20.dp), horizontalArrangement = Arrangement.Center) {
             Button(onClick = { viewModel.startStopRecording(context.filesDir) }) {
-                Text(text = stringResource(id = R.string.record))
+                Text(text = stringResource(id = viewModel.recordingButtonResource.collectAsState().value))
             }
         }
         Row(
