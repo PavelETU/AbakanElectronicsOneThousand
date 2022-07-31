@@ -1,9 +1,9 @@
-package com.example.bluetoothtest.utils
+package com.abakan.electronics.one.thousand.utils
 
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
-import com.example.bluetoothtest.READABLE_NAME_OF_THE_DEVICE
+import com.abakan.electronics.one.thousand.READABLE_NAME_OF_THE_DEVICE
 
 data class ResourceWithFormatting(
     val resource: Int,

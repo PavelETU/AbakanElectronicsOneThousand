@@ -1,4 +1,4 @@
-package com.example.bluetoothtest
+package com.abakan.electronics.one.thousand
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -29,18 +29,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.VerticalAlignmentLine
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.bluetoothtest.theme.ComposeMaterial3TestTheme
-import com.example.bluetoothtest.utils.getStringForCompose
-import com.example.bluetoothtest.utils.getStringFromResource
+import com.abakan.electronics.one.thousand.theme.ComposeMaterial3TestTheme
+import com.abakan.electronics.one.thousand.utils.getStringForCompose
+import com.abakan.electronics.one.thousand.utils.getStringFromResource
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import java.util.regex.Pattern
@@ -49,7 +47,6 @@ import java.util.regex.Pattern
 class MainActivity : ComponentActivity() {
 
     private lateinit var bluetoothAdapter: BluetoothAdapter
-    private val viewModel: MainViewModel by viewModels()
 
     private val registerToGrantPermission =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {

@@ -1,4 +1,4 @@
-package com.example.bluetoothtest
+package com.abakan.electronics.one.thousand
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
@@ -7,9 +7,9 @@ import android.media.AudioTrack
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.bluetoothtest.utils.HeaderForWavFile
-import com.example.bluetoothtest.utils.ResourceWithFormatting
-import com.example.bluetoothtest.utils.shiftValuesByZeroOffset
+import com.abakan.electronics.one.thousand.utils.HeaderForWavFile
+import com.abakan.electronics.one.thousand.utils.ResourceWithFormatting
+import com.abakan.electronics.one.thousand.utils.shiftValuesByZeroOffset
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers

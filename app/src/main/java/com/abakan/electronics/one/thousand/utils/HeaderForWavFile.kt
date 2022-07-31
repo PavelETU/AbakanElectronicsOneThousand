@@ -1,6 +1,6 @@
-package com.example.bluetoothtest.utils
+package com.abakan.electronics.one.thousand.utils
 
-import com.example.bluetoothtest.SAMPLE_RATE
+import com.abakan.electronics.one.thousand.SAMPLE_RATE
 
 object HeaderForWavFile {
     fun getHeaderForWavFile(amountOfBytesRecorded: Int): ByteArray {

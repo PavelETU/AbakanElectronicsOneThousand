@@ -1,4 +1,4 @@
-package com.example.bluetoothtest.theme
+package com.abakan.electronics.one.thousand.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

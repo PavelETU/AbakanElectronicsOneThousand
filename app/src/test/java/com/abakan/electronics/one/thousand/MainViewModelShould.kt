@@ -1,11 +1,11 @@
-package com.example.bluetoothtest
+package com.abakan.electronics.one.thousand
 
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
 import android.media.AudioTrack
 import app.cash.turbine.test
-import com.example.bluetoothtest.utils.ResourceWithFormatting
+import com.abakan.electronics.one.thousand.utils.ResourceWithFormatting
 import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK

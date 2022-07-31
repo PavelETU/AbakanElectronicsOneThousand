@@ -1,4 +1,4 @@
-package com.example.bluetoothtest.utils
+package com.abakan.electronics.one.thousand.utils
 
 import org.junit.Assert.assertTrue
 import org.junit.Test

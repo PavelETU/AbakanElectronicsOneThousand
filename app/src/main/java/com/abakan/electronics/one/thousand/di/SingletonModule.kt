@@ -1,7 +1,7 @@
-package com.example.bluetoothtest.di
+package com.abakan.electronics.one.thousand.di
 
-import com.example.bluetoothtest.AudioTrackProvider
-import com.example.bluetoothtest.AudioTrackProviderImpl
+import com.abakan.electronics.one.thousand.AudioTrackProvider
+import com.abakan.electronics.one.thousand.AudioTrackProviderImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
