@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothSocket
 import android.media.AudioTrack
 import android.util.Log
+import androidx.annotation.RestrictTo
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.abakan.electronics.one.thousand.utils.HeaderForWavFile
@@ -34,7 +35,7 @@ class MainViewModel @Inject constructor(
     private val audioChannel = Channel<ByteArray>(4000)
     private var recording = false
     private var shouldSendBytesForRecord = false
-    val toastMessage = MutableSharedFlow<ResourceWithFormatting>()
+    val disappearingMessage = MutableSharedFlow<ResourceWithFormatting>()
     val outputMessage = MutableStateFlow(ResourceWithFormatting(R.string.app_name, " for $READABLE_NAME_OF_THE_DEVICE"))
     val recordingButtonResource = MutableStateFlow(R.string.record)
 
@@ -52,7 +53,7 @@ class MainViewModel @Inject constructor(
     fun connectDevice(ioDispatcher: CoroutineDispatcher = Dispatchers.IO) {
         viewModelScope.launch(ioDispatcher) {
             if (bluetoothAdapter == null) {
-                toastMessage.emit(ResourceWithFormatting(R.string.bluetooth_was_not_enabled, null))
+                disappearingMessage.emit(ResourceWithFormatting(R.string.bluetooth_was_not_enabled, null))
                 return@launch
             }
             bluetoothAdapter!!.cancelDiscovery()
@@ -60,7 +61,7 @@ class MainViewModel @Inject constructor(
                 bluetoothAdapter!!.bondedDevices.filter { it.name.contains(NAME_OF_THE_DEVICE) }
                     .getOrNull(0)
             if (device == null) {
-                toastMessage.emit(ResourceWithFormatting(R.string.no_device_found))
+                disappearingMessage.emit(ResourceWithFormatting(R.string.no_device_found))
                 return@launch
             }
             prepareAudioTrack()
@@ -78,7 +79,7 @@ class MainViewModel @Inject constructor(
                     try {
                         inputStream.read(bytes)
                     } catch (t: Throwable) {
-                        toastMessage.emit(ResourceWithFormatting(R.string.stream_was_interrupted, null))
+                        disappearingMessage.emit(ResourceWithFormatting(R.string.stream_was_interrupted, null))
                         outputMessage.emit(ResourceWithFormatting(R.string.device_not_connected))
                         break
                     }
@@ -96,7 +97,7 @@ class MainViewModel @Inject constructor(
                 }
             } catch (t: Throwable) {
                 outputMessage.emit(ResourceWithFormatting(R.string.device_not_connected))
-                toastMessage.emit(ResourceWithFormatting(R.string.error_while_connecting, null))
+                disappearingMessage.emit(ResourceWithFormatting(R.string.error_while_connecting, null))
             }
         }
     }
@@ -133,13 +134,16 @@ class MainViewModel @Inject constructor(
             }
             val wavByteArray = HeaderForWavFile.getHeaderForWavFile(amountOfBytes) + dataByteArray
             try {
+                if (!dir.exists()) {
+                    dir.mkdirs()
+                }
                 val file = File(dir, "BluetoothMusic${System.currentTimeMillis() / 1000}.wav")
                 val fileOutputStream = FileOutputStream(file)
                 fileOutputStream.write(wavByteArray)
                 fileOutputStream.close()
                 outputMessage.emit(ResourceWithFormatting(R.string.recording_completed, null))
             } catch (t: Throwable) {
-                toastMessage.emit(ResourceWithFormatting(R.string.error_while_saving, null))
+                disappearingMessage.emit(ResourceWithFormatting(R.string.error_while_saving, null))
             }
         }
     }

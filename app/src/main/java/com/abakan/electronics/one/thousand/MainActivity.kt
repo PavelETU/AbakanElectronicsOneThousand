@@ -14,6 +14,7 @@ import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.ManagedActivityResultLauncher
@@ -22,7 +23,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -146,7 +146,7 @@ private fun ControlPanel(
         onBluetoothEnabledCalled = true
     }
     scope.launch {
-        viewModel.toastMessage.collect {
+        viewModel.disappearingMessage.collect {
             snackbarHostState.showSnackbar(context.getStringFromResource(it))
         }
     }
@@ -176,7 +176,7 @@ private fun ControlPanelInsideScaffold(bluetoothAdapter: BluetoothAdapter,
                 .fillMaxWidth()
                 .align(Alignment.TopCenter)
                 .padding(top = 20.dp), horizontalArrangement = Arrangement.Center) {
-            Button(onClick = { viewModel.startStopRecording(context.filesDir) }) {
+            Button(onClick = { viewModel.startStopRecording(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)) }) {
                 Text(text = stringResource(id = viewModel.recordingButtonResource.collectAsState().value))
             }
         }
