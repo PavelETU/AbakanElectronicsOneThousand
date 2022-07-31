@@ -78,7 +78,7 @@ class MainViewModelShould {
     fun `display bluetooth not available message given onBluetoothEnabled was not called`() = runTest {
         viewModel.connectDevice()
         assertThat(
-            viewModel.toastMessage.first(),
+            viewModel.disappearingMessage.first(),
             `is`(ResourceWithFormatting(R.string.bluetooth_was_not_enabled, null))
         )
     }
@@ -95,7 +95,7 @@ class MainViewModelShould {
     fun `show no device found message given no device found`() = runTest {
         viewModel.onBluetoothEnabledOrDeviceBonded(bluetoothAdapter)
         viewModel.connectDevice()
-        assertThat(viewModel.toastMessage.first(), `is`(ResourceWithFormatting(R.string.no_device_found)))
+        assertThat(viewModel.disappearingMessage.first(), `is`(ResourceWithFormatting(R.string.no_device_found)))
     }
 
     @Test
@@ -109,7 +109,7 @@ class MainViewModelShould {
         viewModel.onBluetoothEnabledOrDeviceBonded(bluetoothAdapter)
         viewModel.connectDevice(StandardTestDispatcher(testScheduler))
 
-        assertThat(viewModel.toastMessage.first(), `is`(ResourceWithFormatting(R.string.error_while_connecting, null)))
+        assertThat(viewModel.disappearingMessage.first(), `is`(ResourceWithFormatting(R.string.error_while_connecting, null)))
         assertThat(viewModel.outputMessage.first(), `is`(ResourceWithFormatting(R.string.device_not_connected)))
     }
 
@@ -152,6 +152,23 @@ class MainViewModelShould {
         advanceUntilIdle()
         val byteArray = ByteArray(128) { 0 }
         verify { audioTrack.write(byteArray, 0,128) }
+    }
+
+    @Test
+    fun `disconnect device and stop playing given onCleared called`() = runTest {
+        val socket: BluetoothSocket = mockk(relaxed = true)
+        val audioTrack: AudioTrack = mockk(relaxed = true)
+        addMyDeviceToBondedDevices()
+        every { myDevice.createRfcommSocketToServiceRecord(any()) } returns socket
+        every { audioTrackProvider.getAudioTrack() } returns audioTrack
+
+        viewModel.onBluetoothEnabledOrDeviceBonded(bluetoothAdapter)
+        viewModel.connectDevice(StandardTestDispatcher(testScheduler))
+        advanceUntilIdle()
+        viewModel.onCleared()
+
+        verify(exactly = 1) { audioTrack.stop() }
+        verify(exactly = 1) { socket.close() }
     }
 
     private fun addMyDeviceToBondedDevices() {

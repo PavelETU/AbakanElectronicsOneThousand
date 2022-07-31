@@ -144,11 +144,11 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    override fun onCleared() {
+    @RestrictTo(RestrictTo.Scope.TESTS)
+    public override fun onCleared() {
         try {
             audioTrack?.stop()
             bluetoothSocket?.close()
-            Log.i(javaClass.name, "Socket is closed")
         } catch (t: Throwable) {
             Log.e(javaClass.name, "Can't close the socket cause ${t.message}")
         }
