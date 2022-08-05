@@ -36,7 +36,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.abakan.electronics.one.thousand.theme.ComposeMaterial3TestTheme
+import com.abakan.electronics.one.thousand.theme.AbakanElectronicsTheme
 import com.abakan.electronics.one.thousand.utils.getStringForCompose
 import com.abakan.electronics.one.thousand.utils.getStringFromResource
 import dagger.hilt.android.AndroidEntryPoint
@@ -119,7 +119,7 @@ class MainActivity : ComponentActivity() {
     @SuppressLint("MissingPermission")
     private fun onBluetoothEnabled() {
         setContent {
-            ComposeMaterial3TestTheme {
+            AbakanElectronicsTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -145,19 +145,19 @@ private fun ControlPanel(
         viewModel.onBluetoothEnabledOrDeviceBonded(bluetoothAdapter)
         onBluetoothEnabledCalled = true
     }
-    scope.launch {
+    LaunchedEffect(Unit) {
         viewModel.disappearingMessage.collect {
             snackbarHostState.showSnackbar(context.getStringFromResource(it))
         }
     }
     Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }, content = {
-        ControlPanelInsideScaffold(bluetoothAdapter, viewModel)
+        ControlPanelInsideScaffold(bluetoothAdapter, viewModel, it)
     })
 }
 
 @Composable
 private fun ControlPanelInsideScaffold(bluetoothAdapter: BluetoothAdapter,
-                                       viewModel: MainViewModel = viewModel()) {
+                                       viewModel: MainViewModel = viewModel(), paddingValues: PaddingValues) {
     val context = LocalContext.current
     @SuppressLint("MissingPermission")
     val registerToPairDevice =
@@ -168,7 +168,7 @@ private fun ControlPanelInsideScaffold(bluetoothAdapter: BluetoothAdapter,
             viewModel.onBluetoothEnabledOrDeviceBonded(bluetoothAdapter)
         }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
         val resourceWithFormatting = viewModel.outputMessage.collectAsState().value
         Text(text = resourceWithFormatting.getStringForCompose(), Modifier.align(Alignment.Center), textAlign = TextAlign.Center)
         Row(

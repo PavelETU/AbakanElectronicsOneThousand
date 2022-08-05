@@ -19,4 +19,5 @@
     <string name="error_while_saving">Error while recording</string>
     <string name="recording_started">Recording started…</string>
     <string name="recording_completed">Recording completed</string>
+    <string name="tune">Tune</string>
 </resources>
