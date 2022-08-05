@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">BluetoothTest</string>
+    <string name="app_name">Abakan Electronics 1000</string>
     <string name="pair_new_device">Pair device</string>
     <string name="connect">Connect</string>
     <string name="no_device_paired">You don\'t have any %1$s devices paired. Turn on the device
