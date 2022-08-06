@@ -40,7 +40,6 @@ import com.abakan.electronics.one.thousand.theme.AbakanElectronicsTheme
 import com.abakan.electronics.one.thousand.utils.getStringForCompose
 import com.abakan.electronics.one.thousand.utils.getStringFromResource
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
 import java.util.regex.Pattern
 
 @AndroidEntryPoint
@@ -168,18 +167,30 @@ private fun ControlPanelInsideScaffold(bluetoothAdapter: BluetoothAdapter,
             viewModel.onBluetoothEnabledOrDeviceBonded(bluetoothAdapter)
         }
 
-    Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+    ShowTunerWhenNeeded(viewModel)
+    Box(modifier = Modifier
+        .fillMaxSize()
+        .padding(paddingValues)) {
         val resourceWithFormatting = viewModel.outputMessage.collectAsState().value
-        Text(text = resourceWithFormatting.getStringForCompose(), Modifier.align(Alignment.Center), textAlign = TextAlign.Center)
         Row(
             Modifier
                 .fillMaxWidth()
                 .align(Alignment.TopCenter)
                 .padding(top = 20.dp), horizontalArrangement = Arrangement.Center) {
-            Button(onClick = { viewModel.startStopRecording(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)) }) {
+            Button(onClick = { viewModel.startStopRecording(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)) },
+                modifier = Modifier
+                    .weight(1.0F)
+                    .padding(8.dp)) {
                 Text(text = stringResource(id = viewModel.recordingButtonResource.collectAsState().value))
             }
+            Button(onClick = { viewModel.startTuning() },
+                modifier = Modifier
+                    .weight(1.0F)
+                    .padding(8.dp)) {
+                Text(text = stringResource(R.string.tune))
+            }
         }
+        Text(text = resourceWithFormatting.getStringForCompose(), Modifier.align(Alignment.Center), textAlign = TextAlign.Center)
         Row(
             Modifier
                 .fillMaxWidth()
@@ -198,6 +209,13 @@ private fun ControlPanelInsideScaffold(bluetoothAdapter: BluetoothAdapter,
                 Text(text = stringResource(id = R.string.connect))
             }
         }
+    }
+}
+
+@Composable
+private fun ShowTunerWhenNeeded(viewModel: MainViewModel) {
+    if (viewModel.showTuner.collectAsState().value) {
+        Tuner(viewModel)
     }
 }
 

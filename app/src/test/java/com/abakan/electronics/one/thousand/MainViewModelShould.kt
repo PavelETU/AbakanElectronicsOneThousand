@@ -5,19 +5,16 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
 import android.media.AudioTrack
 import app.cash.turbine.test
+import com.abakan.electronics.one.thousand.utils.FFTHelper
 import com.abakan.electronics.one.thousand.utils.ResourceWithFormatting
-import io.mockk.MockKAnnotations
-import io.mockk.every
+import io.mockk.*
 import io.mockk.impl.annotations.MockK
-import io.mockk.mockk
-import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.*
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.IOException
@@ -33,11 +30,13 @@ class MainViewModelShould {
     private lateinit var audioTrackProvider: AudioTrackProvider
     @MockK
     private lateinit var myDevice: BluetoothDevice
+    @MockK(relaxed = true)
+    private lateinit var fftHelper: FFTHelper
 
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
-        viewModel = MainViewModel(audioTrackProvider)
+        viewModel = MainViewModel(audioTrackProvider, fftHelper)
     }
 
     @Test
@@ -134,23 +133,13 @@ class MainViewModelShould {
     }
 
     @Test
-    fun `write 160 bytes from BluetoothSocket into audioTrack given connection is established`() = runTest {
-        val socket = mockk<BluetoothSocket>()
-        val inputStream: InputStream = mockk(relaxed = true)
+    fun `write 128 bytes from BluetoothSocket into audioTrack given connection is established`() = runTest {
         val audioTrack: AudioTrack = mockk(relaxed = true)
-        addMyDeviceToBondedDevices()
-        every { myDevice.createRfcommSocketToServiceRecord(any()) } returns socket
-        every { audioTrackProvider.getAudioTrack() } returns mockk(relaxed = true)
-        every { socket.connect() } returns Unit
-        every { socket.inputStream } returns inputStream
-        every { inputStream.read() } returns 0
-        every { audioTrackProvider.getAudioTrack() } returns audioTrack
-
-        viewModel.onBluetoothEnabledOrDeviceBonded(bluetoothAdapter)
-        viewModel.connectDevice(StandardTestDispatcher(testScheduler))
+        val byteToStream: Byte = 8
+        stream128Bytes(audioTrack, bytesToWrite = ByteArray(128) { byteToStream })
 
         advanceUntilIdle()
-        val byteArray = ByteArray(128) { 0 }
+        val byteArray = ByteArray(128) { byteToStream }
         verify { audioTrack.write(byteArray, 0,128) }
     }
 
@@ -169,6 +158,78 @@ class MainViewModelShould {
 
         verify(exactly = 1) { audioTrack.stop() }
         verify(exactly = 1) { socket.close() }
+    }
+
+    @Test
+    fun `do not display tuner by default`() {
+        assertThat(viewModel.showTuner.value, `is`(false))
+    }
+
+    @Test
+    fun `display tuner given tune click`() = runTest {
+        viewModel.startTuning(StandardTestDispatcher(testScheduler))
+        advanceUntilIdle()
+        assertThat(viewModel.showTuner.value, `is`(true))
+    }
+
+    @Test
+    fun `close tuner given it was open and dismissed`() = runTest {
+        viewModel.startTuning(StandardTestDispatcher(testScheduler))
+        viewModel.tuningDismissed()
+        assertThat(viewModel.showTuner.value, `is`(false))
+    }
+
+    @Test
+    fun `pass data for tuning given tuning has started`() = runTest {
+        val inputStream = mockk<InputStream>(relaxed = true)
+        val bytesToStream = ByteArray(128) { 22 }
+        viewModel.startTuning(StandardTestDispatcher(testScheduler))
+        stream128Bytes(inputStream = inputStream, bytesToWrite = bytesToStream)
+        assertThat(viewModel.fftChannel.receive(), `is`(bytesToStream))
+    }
+
+    @Test
+    fun `do not pass data for tuning given tuning dismissed`() = runTest {
+        val inputStream = mockk<InputStream>(relaxed = true)
+        val bytesToStream = ByteArray(128) { 33 }
+        val ioDispatcher = StandardTestDispatcher(testScheduler)
+        viewModel.startTuning(ioDispatcher)
+        advanceUntilIdle()
+        viewModel.tuningDismissed()
+        stream128Bytes(inputStream = inputStream, bytesToWrite = bytesToStream, testDispatcher = ioDispatcher)
+        assertTrue(viewModel.fftChannel.isEmpty)
+    }
+
+    @Test
+    fun `display peak frequency from fft utils given tuning started`() = runTest {
+        val inputStream = mockk<InputStream>(relaxed = true)
+        val bytesToStream = ByteArray(128) { 22 }
+        val peakFrequency = 40.75
+        every { fftHelper.getPeakFrequency(any()) } returns peakFrequency
+        viewModel.startTuning(StandardTestDispatcher(testScheduler))
+        stream128Bytes(inputStream = inputStream, bytesToWrite = bytesToStream)
+        advanceUntilIdle()
+        verify(exactly = 1) { fftHelper.getPeakFrequency(bytesToStream) }
+        assertThat(viewModel.leadingFrequency.value, `is`(peakFrequency))
+    }
+
+    private fun TestScope.stream128Bytes(audioTrack: AudioTrack = mockk(relaxed = true),
+                                         inputStream: InputStream = mockk(relaxed = true),
+                                         bytesToWrite: ByteArray = ByteArray(128),
+                                         testDispatcher: TestDispatcher = StandardTestDispatcher(testScheduler)) {
+        val socket = mockk<BluetoothSocket>()
+        val slot = slot<ByteArray>()
+        addMyDeviceToBondedDevices()
+        every { myDevice.createRfcommSocketToServiceRecord(any()) } returns socket
+        every { socket.connect() } returns Unit
+        every { socket.inputStream } returns inputStream
+        every { inputStream.read(capture(slot)) } answers {
+            bytesToWrite.copyInto(slot.captured); 128
+        } andThenThrows IOException("Stream interrupted")
+        every { audioTrackProvider.getAudioTrack() } returns audioTrack
+
+        viewModel.onBluetoothEnabledOrDeviceBonded(bluetoothAdapter)
+        viewModel.connectDevice(testDispatcher)
     }
 
     private fun addMyDeviceToBondedDevices() {

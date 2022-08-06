@@ -6,8 +6,10 @@ import android.bluetooth.BluetoothSocket
 import android.media.AudioTrack
 import android.util.Log
 import androidx.annotation.RestrictTo
+import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.abakan.electronics.one.thousand.utils.FFTHelper
 import com.abakan.electronics.one.thousand.utils.HeaderForWavFile
 import com.abakan.electronics.one.thousand.utils.ResourceWithFormatting
 import com.abakan.electronics.one.thousand.utils.shiftValuesByZeroOffset
@@ -27,7 +29,8 @@ import javax.inject.Inject
 @SuppressLint("MissingPermission")
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val audioTrackProvider: AudioTrackProvider
+    private val audioTrackProvider: AudioTrackProvider,
+    private val fftHelper: FFTHelper
 ) : ViewModel() {
     private var bluetoothAdapter: BluetoothAdapter? = null
     private var bluetoothSocket: BluetoothSocket? = null
@@ -38,6 +41,11 @@ class MainViewModel @Inject constructor(
     val disappearingMessage = MutableSharedFlow<ResourceWithFormatting>()
     val outputMessage = MutableStateFlow(ResourceWithFormatting(R.string.app_name, " for $READABLE_NAME_OF_THE_DEVICE"))
     val recordingButtonResource = MutableStateFlow(R.string.record)
+    val showTuner = MutableStateFlow(false)
+    val leadingFrequency = MutableStateFlow(0.0)
+    @VisibleForTesting
+    val fftChannel = Channel<ByteArray>(4000)
+    private var tuning = false
 
     fun onBluetoothEnabledOrDeviceBonded(bluetoothAdapter: BluetoothAdapter) {
         this.bluetoothAdapter = bluetoothAdapter
@@ -85,6 +93,9 @@ class MainViewModel @Inject constructor(
                     }
                     if (shouldSendBytesForRecord) {
                         audioChannel.send(bytes.copyOf())
+                    }
+                    if (tuning) {
+                        fftChannel.send(bytes.copyOf())
                     }
                     overallBytes++
                     val newSeconds = System.currentTimeMillis() / 1000
@@ -156,5 +167,20 @@ class MainViewModel @Inject constructor(
         } catch (t: Throwable) {
             Log.e(javaClass.name, "Can't close the socket cause ${t.message}")
         }
+    }
+
+    fun startTuning(ioDispatcher: CoroutineDispatcher = Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
+            showTuner.emit(true)
+            tuning = true
+            while (tuning) {
+                leadingFrequency.emit(fftHelper.getPeakFrequency(fftChannel.receive()))
+            }
+        }
+    }
+
+    fun tuningDismissed() {
+        showTuner.tryEmit(false)
+        tuning = false
     }
 }

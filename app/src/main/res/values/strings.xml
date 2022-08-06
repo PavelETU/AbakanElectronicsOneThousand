@@ -20,4 +20,5 @@
     <string name="recording_started">Recording started…</string>
     <string name="recording_completed">Recording completed</string>
     <string name="tune">Tune</string>
+    <string name="close_tuner">Close Tuner</string>
 </resources>
