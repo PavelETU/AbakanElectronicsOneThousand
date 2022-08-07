@@ -19,6 +19,7 @@ class SimpleDFT @Inject constructor(): FourierTransform {
             }
             result.add(xOfK.toDouble())
         }
+        result[0] = 0.0
         return result
     }
 }

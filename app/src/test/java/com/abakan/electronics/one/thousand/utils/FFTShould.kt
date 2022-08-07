@@ -15,10 +15,10 @@ class FFTShould {
     }
 
     @Test
-    fun `transform simple time domain input into frequency domain output`() {
+    fun `transform time domain into frequency domain zeroing first element`() {
         val byteArray = ByteArray(4) { (it + 1).toByte() }
         val results = fourierTransform.transformToFrequencyDomain(byteArray)
-        assertThat(results[0], `is`(10.0))
+        assertThat(results[0], `is`(0.0))
         assertThat(results[1], `is`(2.8284271247461903))
         assertThat(results[2], `is`(2.0))
         assertThat(results[3], `is`(2.8284271247461894))
