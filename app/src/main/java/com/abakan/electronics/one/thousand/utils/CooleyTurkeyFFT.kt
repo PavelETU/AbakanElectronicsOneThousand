@@ -2,8 +2,8 @@ package com.abakan.electronics.one.thousand.utils
 
 import javax.inject.Inject
 
-class CooleyTurkeyFFT @Inject constructor(): FFTHelper {
-    override fun getPeakFrequency(bytesToStream: ByteArray): Double {
+class CooleyTurkeyFFT @Inject constructor(): FourierTransform {
+    override fun getPeakFrequencyIndex(bytesToStream: ByteArray): Int {
         TODO("Not yet implemented")
     }
 

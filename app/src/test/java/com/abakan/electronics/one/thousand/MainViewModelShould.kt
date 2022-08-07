@@ -5,7 +5,7 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
 import android.media.AudioTrack
 import app.cash.turbine.test
-import com.abakan.electronics.one.thousand.utils.FFTHelper
+import com.abakan.electronics.one.thousand.utils.FourierTransform
 import com.abakan.electronics.one.thousand.utils.ResourceWithFormatting
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
@@ -31,12 +31,12 @@ class MainViewModelShould {
     @MockK
     private lateinit var myDevice: BluetoothDevice
     @MockK(relaxed = true)
-    private lateinit var fftHelper: FFTHelper
+    private lateinit var fourierTransform: FourierTransform
 
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
-        viewModel = MainViewModel(audioTrackProvider, fftHelper)
+        viewModel = MainViewModel(audioTrackProvider, fourierTransform)
     }
 
     @Test
@@ -204,13 +204,13 @@ class MainViewModelShould {
     fun `display peak frequency from fft utils given tuning started`() = runTest {
         val inputStream = mockk<InputStream>(relaxed = true)
         val bytesToStream = ByteArray(128) { 22 }
-        val peakFrequency = 40.75
-        every { fftHelper.getPeakFrequency(any()) } returns peakFrequency
+        val peakFrequencyIndex = 40
+        every { fourierTransform.getPeakFrequencyIndex(any()) } returns peakFrequencyIndex
         viewModel.startTuning(StandardTestDispatcher(testScheduler))
         stream128Bytes(inputStream = inputStream, bytesToWrite = bytesToStream)
         advanceUntilIdle()
-        verify(exactly = 1) { fftHelper.getPeakFrequency(bytesToStream) }
-        assertThat(viewModel.leadingFrequency.value, `is`(peakFrequency))
+        verify(exactly = 1) { fourierTransform.getPeakFrequencyIndex(bytesToStream) }
+        assertThat(viewModel.leadingFrequency.value, `is`(40.0))
     }
 
     private fun TestScope.stream128Bytes(audioTrack: AudioTrack = mockk(relaxed = true),

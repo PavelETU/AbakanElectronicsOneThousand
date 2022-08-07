@@ -2,8 +2,8 @@ package com.abakan.electronics.one.thousand.di
 
 import com.abakan.electronics.one.thousand.AudioTrackProvider
 import com.abakan.electronics.one.thousand.AudioTrackProviderImpl
-import com.abakan.electronics.one.thousand.utils.FFTHelper
-import com.abakan.electronics.one.thousand.utils.SimpleFFT
+import com.abakan.electronics.one.thousand.utils.FourierTransform
+import com.abakan.electronics.one.thousand.utils.SimpleDFT
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -19,5 +19,5 @@ abstract class SingletonModule {
 
     @Singleton
     @Binds
-    abstract fun bindFFTHelper(cooleyTurkeyFFT: SimpleFFT): FFTHelper
+    abstract fun bindFFTHelper(cooleyTurkeyFFT: SimpleDFT): FourierTransform
 }

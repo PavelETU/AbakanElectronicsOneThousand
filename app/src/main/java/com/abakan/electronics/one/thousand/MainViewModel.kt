@@ -9,7 +9,7 @@ import androidx.annotation.RestrictTo
 import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.abakan.electronics.one.thousand.utils.FFTHelper
+import com.abakan.electronics.one.thousand.utils.FourierTransform
 import com.abakan.electronics.one.thousand.utils.HeaderForWavFile
 import com.abakan.electronics.one.thousand.utils.ResourceWithFormatting
 import com.abakan.electronics.one.thousand.utils.shiftValuesByZeroOffset
@@ -30,7 +30,7 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val audioTrackProvider: AudioTrackProvider,
-    private val fftHelper: FFTHelper
+    private val fourierTransform: FourierTransform
 ) : ViewModel() {
     private var bluetoothAdapter: BluetoothAdapter? = null
     private var bluetoothSocket: BluetoothSocket? = null
@@ -174,7 +174,8 @@ class MainViewModel @Inject constructor(
             showTuner.emit(true)
             tuning = true
             while (tuning) {
-                leadingFrequency.emit(fftHelper.getPeakFrequency(fftChannel.receive()))
+                val peakFrequencyIndex = fourierTransform.getPeakFrequencyIndex(fftChannel.receive())
+                leadingFrequency.emit(peakFrequencyIndex.toDouble())
             }
         }
     }

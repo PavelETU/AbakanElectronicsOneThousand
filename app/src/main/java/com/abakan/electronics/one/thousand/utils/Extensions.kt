@@ -7,3 +7,7 @@ fun ByteArray.shiftValuesByZeroOffset(): ByteArray {
 }
 
 fun Byte.toComplex(): ComplexNumber = ComplexNumber(toDouble(), 0.0)
+
+fun <T: Comparable<T>> List<T>.indexOfMax(): Int {
+    return indices.maxByOrNull { this[it] } ?: 0
+}
