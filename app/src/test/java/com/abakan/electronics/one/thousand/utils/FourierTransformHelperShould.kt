@@ -60,4 +60,11 @@ class FourierTransformHelperShould {
         val peakFrequency = fourierTransformHelper.getPeakFrequency(ByteArray(400000))
         assertEquals(3999.99, peakFrequency, 0.0001)
     }
+
+    @Test
+    fun `provide spectrogram`() {
+        val valueInFrequencyDomain = List(4000) { it.toDouble() }
+        every { fourierTransform.transformToFrequencyDomain(any()) } returns valueInFrequencyDomain
+        assertEquals(valueInFrequencyDomain, fourierTransformHelper.getSpectrogram(ByteArray(4000)))
+    }
 }

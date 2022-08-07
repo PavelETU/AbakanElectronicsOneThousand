@@ -6,4 +6,5 @@ interface FourierTransformHelper {
     fun getPeakFrequency(dataInTimeDomain: ByteArray): Double
     @VisibleForTesting
     fun getPeakFrequencyIndex(bytesToStream: ByteArray): Int
+    fun getSpectrogram(dataInTimeDomain: ByteArray): List<Double>
 }

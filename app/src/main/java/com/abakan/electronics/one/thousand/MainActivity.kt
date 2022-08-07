@@ -187,7 +187,7 @@ private fun ControlPanelInsideScaffold(bluetoothAdapter: BluetoothAdapter,
                 modifier = Modifier
                     .weight(1.0F)
                     .padding(8.dp)) {
-                Text(text = stringResource(R.string.tune))
+                Text(text = stringResource(if (SPECTROGRAM_OVER_TUNER) R.string.spectrogram else R.string.tune))
             }
         }
         Text(text = resourceWithFormatting.getStringForCompose(), Modifier.align(Alignment.Center), textAlign = TextAlign.Center)

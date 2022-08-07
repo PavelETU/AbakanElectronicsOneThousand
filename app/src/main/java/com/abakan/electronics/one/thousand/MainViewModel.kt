@@ -40,6 +40,7 @@ class MainViewModel @Inject constructor(
     val recordingButtonResource = MutableStateFlow(R.string.record)
     val showTuner = MutableStateFlow(false)
     val leadingFrequency = MutableStateFlow(0.0)
+    val spectrogram = MutableStateFlow(listOf<Double>())
     @VisibleForTesting
     val fftChannel = Channel<ByteArray>(4000)
     private var tuning = false
@@ -173,9 +174,14 @@ class MainViewModel @Inject constructor(
             var dataInTimeDomain = ByteArray(0)
             while (tuning) {
                 dataInTimeDomain += fftChannel.receive()
-                if (dataInTimeDomain.size == 6400) {
-                    val peakFrequency = fourierTransformHelper.getPeakFrequency(dataInTimeDomain)
-                    leadingFrequency.emit(peakFrequency)
+                if (dataInTimeDomain.size == 256) {
+                    if (SPECTROGRAM_OVER_TUNER) {
+                        val spector = fourierTransformHelper.getSpectrogram(dataInTimeDomain)
+                        spectrogram.emit(spector)
+                    } else {
+                        val peakFrequency = fourierTransformHelper.getPeakFrequency(dataInTimeDomain)
+                        leadingFrequency.emit(peakFrequency)
+                    }
                     dataInTimeDomain = ByteArray(0)
                 }
             }

@@ -14,4 +14,8 @@ class FourierTransformHelperImpl @Inject constructor(private val fourierTransfor
         val dataInFrequencyDomain = fourierTransform.transformToFrequencyDomain(bytesToStream)
         return dataInFrequencyDomain.indexOfMax()
     }
+
+    override fun getSpectrogram(dataInTimeDomain: ByteArray): List<Double> {
+        return fourierTransform.transformToFrequencyDomain(dataInTimeDomain)
+    }
 }
