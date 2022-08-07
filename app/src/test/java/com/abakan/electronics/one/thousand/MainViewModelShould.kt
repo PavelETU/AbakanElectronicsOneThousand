@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothSocket
 import android.media.AudioTrack
 import app.cash.turbine.test
 import com.abakan.electronics.one.thousand.utils.FourierTransform
+import com.abakan.electronics.one.thousand.utils.FourierTransformHelper
 import com.abakan.electronics.one.thousand.utils.ResourceWithFormatting
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
@@ -16,6 +17,7 @@ import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import java.io.IOException
 import java.io.InputStream
@@ -31,12 +33,12 @@ class MainViewModelShould {
     @MockK
     private lateinit var myDevice: BluetoothDevice
     @MockK(relaxed = true)
-    private lateinit var fourierTransform: FourierTransform
+    private lateinit var fourierTransformHelper: FourierTransformHelper
 
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
-        viewModel = MainViewModel(audioTrackProvider, fourierTransform)
+        viewModel = MainViewModel(audioTrackProvider, fourierTransformHelper)
     }
 
     @Test
@@ -201,35 +203,56 @@ class MainViewModelShould {
     }
 
     @Test
-    fun `display peak frequency from fft utils given tuning started`() = runTest {
+    fun `do not start FT computation while there are less than 6400 bytes during tuning`() = runTest {
         val inputStream = mockk<InputStream>(relaxed = true)
-        val bytesToStream = ByteArray(128) { 22 }
-        val peakFrequencyIndex = 40
-        every { fourierTransform.getPeakFrequencyIndex(any()) } returns peakFrequencyIndex
         viewModel.startTuning(StandardTestDispatcher(testScheduler))
-        stream128Bytes(inputStream = inputStream, bytesToWrite = bytesToStream)
+        stream128Bytes(inputStream = inputStream, times = 49)
         advanceUntilIdle()
-        verify(exactly = 1) { fourierTransform.getPeakFrequencyIndex(bytesToStream) }
+        verify(exactly = 0) { fourierTransformHelper.getPeakFrequency(any()) }
+    }
+
+    @Test
+    fun `display peak frequency using fft utils given tuning started and 6400 bytes received`() = runTest {
+        val inputStream = mockk<InputStream>(relaxed = true)
+        val peakFrequency = 40.0
+        every { fourierTransformHelper.getPeakFrequency(any()) } returns peakFrequency
+        viewModel.startTuning(StandardTestDispatcher(testScheduler))
+        stream128Bytes(inputStream = inputStream, times = 50)
+        advanceUntilIdle()
+        verify(exactly = 1) { fourierTransformHelper.getPeakFrequency(any()) }
         assertThat(viewModel.leadingFrequency.value, `is`(40.0))
     }
 
     private fun TestScope.stream128Bytes(audioTrack: AudioTrack = mockk(relaxed = true),
                                          inputStream: InputStream = mockk(relaxed = true),
                                          bytesToWrite: ByteArray = ByteArray(128),
-                                         testDispatcher: TestDispatcher = StandardTestDispatcher(testScheduler)) {
+                                         testDispatcher: TestDispatcher = StandardTestDispatcher(testScheduler),
+                                         times: Int = 1) {
         val socket = mockk<BluetoothSocket>()
         val slot = slot<ByteArray>()
         addMyDeviceToBondedDevices()
         every { myDevice.createRfcommSocketToServiceRecord(any()) } returns socket
         every { socket.connect() } returns Unit
         every { socket.inputStream } returns inputStream
-        every { inputStream.read(capture(slot)) } answers {
-            bytesToWrite.copyInto(slot.captured); 128
-        } andThenThrows IOException("Stream interrupted")
+        transferByteArrayNTimesAndFinishStream(inputStream, slot, bytesToWrite, times)
         every { audioTrackProvider.getAudioTrack() } returns audioTrack
 
         viewModel.onBluetoothEnabledOrDeviceBonded(bluetoothAdapter)
         viewModel.connectDevice(testDispatcher)
+    }
+
+    private fun transferByteArrayNTimesAndFinishStream(
+        inputStream: InputStream,
+        slot: CapturingSlot<ByteArray>,
+        bytesToWrite: ByteArray,
+        n: Int
+    ) {
+        when(n) {
+            1 -> every { inputStream.read(capture(slot)) } answers {
+                bytesToWrite.copyInto(slot.captured); 128
+            } andThenThrows IOException("Stream interrupted")
+            else -> every { inputStream.read(capture(slot)) } returnsMany (List(n) { 128 }) andThenThrows IOException("Stream interrupted")
+        }
     }
 
     private fun addMyDeviceToBondedDevices() {

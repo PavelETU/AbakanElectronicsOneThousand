@@ -23,11 +23,4 @@ class FFTShould {
         assertThat(results[2], `is`(2.0))
         assertThat(results[3], `is`(2.8284271247461894))
     }
-
-    @Test
-    fun `return peak frequency index`() {
-        val byteArray = ByteArray(4) { (it + 1).toByte() }
-        val indexOfHighestFrequency = fourierTransform.getPeakFrequencyIndex(byteArray)
-        assertEquals(0, indexOfHighestFrequency)
-    }
 }

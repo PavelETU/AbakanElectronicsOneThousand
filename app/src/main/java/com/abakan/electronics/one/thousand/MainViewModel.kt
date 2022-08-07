@@ -9,10 +9,7 @@ import androidx.annotation.RestrictTo
 import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.abakan.electronics.one.thousand.utils.FourierTransform
-import com.abakan.electronics.one.thousand.utils.HeaderForWavFile
-import com.abakan.electronics.one.thousand.utils.ResourceWithFormatting
-import com.abakan.electronics.one.thousand.utils.shiftValuesByZeroOffset
+import com.abakan.electronics.one.thousand.utils.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -30,7 +27,7 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val audioTrackProvider: AudioTrackProvider,
-    private val fourierTransform: FourierTransform
+    private val fourierTransformHelper: FourierTransformHelper
 ) : ViewModel() {
     private var bluetoothAdapter: BluetoothAdapter? = null
     private var bluetoothSocket: BluetoothSocket? = null
@@ -173,9 +170,14 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch(ioDispatcher) {
             showTuner.emit(true)
             tuning = true
+            var dataInTimeDomain = ByteArray(0)
             while (tuning) {
-                val peakFrequencyIndex = fourierTransform.getPeakFrequencyIndex(fftChannel.receive())
-                leadingFrequency.emit(peakFrequencyIndex.toDouble())
+                dataInTimeDomain += fftChannel.receive()
+                if (dataInTimeDomain.size == 6400) {
+                    val peakFrequency = fourierTransformHelper.getPeakFrequency(dataInTimeDomain)
+                    leadingFrequency.emit(peakFrequency)
+                    dataInTimeDomain = ByteArray(0)
+                }
             }
         }
     }

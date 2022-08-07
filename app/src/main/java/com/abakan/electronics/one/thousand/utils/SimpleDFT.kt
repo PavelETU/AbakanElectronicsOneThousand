@@ -6,10 +6,6 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 class SimpleDFT @Inject constructor(): FourierTransform {
-    override fun getPeakFrequencyIndex(bytesToStream: ByteArray): Int {
-        return transformToFrequencyDomain(bytesToStream).indexOfMax()
-    }
-
     override fun transformToFrequencyDomain(bytes: ByteArray): List<Double> {
         val result = mutableListOf<Double>()
         val n = bytes.size
