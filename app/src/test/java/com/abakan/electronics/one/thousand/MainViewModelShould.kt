@@ -5,7 +5,7 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
 import android.media.AudioTrack
 import app.cash.turbine.test
-import com.abakan.electronics.one.thousand.utils.FourierTransformHelper
+import com.abakan.electronics.one.thousand.utils.fourier_transform.FourierTransformHelper
 import com.abakan.electronics.one.thousand.utils.ResourceWithFormatting
 import io.mockk.*
 import io.mockk.impl.annotations.MockK

@@ -1,8 +1,9 @@
-package com.abakan.electronics.one.thousand.utils
+package com.abakan.electronics.one.thousand.utils.forier_transform
 
+import com.abakan.electronics.one.thousand.utils.fourier_transform.FourierTransform
+import com.abakan.electronics.one.thousand.utils.fourier_transform.SimpleDFT
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
-import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class FFTShould {

@@ -1,9 +1,11 @@
-package com.abakan.electronics.one.thousand.utils
+package com.abakan.electronics.one.thousand.utils.fourier_transform
 
 import com.abakan.electronics.one.thousand.SAMPLE_RATE
+import com.abakan.electronics.one.thousand.utils.indexOfMax
 import javax.inject.Inject
 
-class FourierTransformHelperImpl @Inject constructor(private val fourierTransform: FourierTransform): FourierTransformHelper {
+class FourierTransformHelperImpl @Inject constructor(private val fourierTransform: FourierTransform):
+    FourierTransformHelper {
     override fun getPeakFrequency(dataInTimeDomain: ByteArray): Double {
         val peakFrequencyIndex = getPeakFrequencyIndex(dataInTimeDomain)
         val frequencyResolutionInHz = SAMPLE_RATE.toDouble() / dataInTimeDomain.size

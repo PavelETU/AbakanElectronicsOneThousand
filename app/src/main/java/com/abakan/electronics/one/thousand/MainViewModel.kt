@@ -10,6 +10,7 @@ import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.abakan.electronics.one.thousand.utils.*
+import com.abakan.electronics.one.thousand.utils.fourier_transform.FourierTransformHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers

@@ -1,4 +1,4 @@
-package com.abakan.electronics.one.thousand.utils
+package com.abakan.electronics.one.thousand.utils.fourier_transform
 
 import kotlin.math.pow
 import kotlin.math.roundToInt

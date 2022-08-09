@@ -1,5 +1,6 @@
 package com.abakan.electronics.one.thousand.utils
 
+import com.abakan.electronics.one.thousand.utils.fourier_transform.ComplexNumber
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test

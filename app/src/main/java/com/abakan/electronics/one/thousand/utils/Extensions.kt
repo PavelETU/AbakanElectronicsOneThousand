@@ -1,6 +1,7 @@
 package com.abakan.electronics.one.thousand.utils
 
 import com.abakan.electronics.one.thousand.ZERO_OFFSET
+import com.abakan.electronics.one.thousand.utils.fourier_transform.ComplexNumber
 
 fun ByteArray.shiftValuesByZeroOffset(): ByteArray {
     return map { (it.toInt() - ZERO_OFFSET).toByte() }.toByteArray()

@@ -1,5 +1,6 @@
-package com.abakan.electronics.one.thousand.utils
+package com.abakan.electronics.one.thousand.utils.fourier_transform
 
+import com.abakan.electronics.one.thousand.utils.toComplex
 import javax.inject.Inject
 import kotlin.math.PI
 import kotlin.math.cos

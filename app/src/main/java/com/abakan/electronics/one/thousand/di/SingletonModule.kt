@@ -2,10 +2,10 @@ package com.abakan.electronics.one.thousand.di
 
 import com.abakan.electronics.one.thousand.AudioTrackProvider
 import com.abakan.electronics.one.thousand.AudioTrackProviderImpl
-import com.abakan.electronics.one.thousand.utils.FourierTransform
-import com.abakan.electronics.one.thousand.utils.FourierTransformHelper
-import com.abakan.electronics.one.thousand.utils.FourierTransformHelperImpl
-import com.abakan.electronics.one.thousand.utils.SimpleDFT
+import com.abakan.electronics.one.thousand.utils.fourier_transform.FourierTransform
+import com.abakan.electronics.one.thousand.utils.fourier_transform.FourierTransformHelper
+import com.abakan.electronics.one.thousand.utils.fourier_transform.FourierTransformHelperImpl
+import com.abakan.electronics.one.thousand.utils.fourier_transform.SimpleDFT
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
