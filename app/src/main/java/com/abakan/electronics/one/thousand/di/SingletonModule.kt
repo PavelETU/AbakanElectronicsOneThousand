@@ -2,10 +2,7 @@ package com.abakan.electronics.one.thousand.di
 
 import com.abakan.electronics.one.thousand.AudioTrackProvider
 import com.abakan.electronics.one.thousand.AudioTrackProviderImpl
-import com.abakan.electronics.one.thousand.utils.fourier_transform.FourierTransform
-import com.abakan.electronics.one.thousand.utils.fourier_transform.FourierTransformHelper
-import com.abakan.electronics.one.thousand.utils.fourier_transform.FourierTransformHelperImpl
-import com.abakan.electronics.one.thousand.utils.fourier_transform.SimpleDFT
+import com.abakan.electronics.one.thousand.utils.fourier_transform.*
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -25,5 +22,5 @@ abstract class SingletonModule {
 
     @Singleton
     @Binds
-    abstract fun bindFourierTransformAlgorithm(simpleDFT: SimpleDFT): FourierTransform
+    abstract fun bindFourierTransformAlgorithm(simpleDFT: CooleyTurkeyFFT): FourierTransform
 }
