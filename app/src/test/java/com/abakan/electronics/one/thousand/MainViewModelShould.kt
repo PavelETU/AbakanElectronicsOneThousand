@@ -5,8 +5,8 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
 import android.media.AudioTrack
 import app.cash.turbine.test
-import com.abakan.electronics.one.thousand.utils.fourier_transform.FourierTransformHelper
 import com.abakan.electronics.one.thousand.utils.ResourceWithFormatting
+import com.abakan.electronics.one.thousand.utils.fourier_transform.FourierTransformHelper
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -201,48 +201,48 @@ class MainViewModelShould {
     }
 
     @Test
-    fun `do not start FT computation while there are less than 256 bytes during tuning`() = runTest {
+    fun `do not start FT computation while there are less than 6400 bytes during tuning`() = runTest {
         SPECTROGRAM_OVER_TUNER = false
         val inputStream = mockk<InputStream>(relaxed = true)
         viewModel.startTuning(StandardTestDispatcher(testScheduler))
-        stream128Bytes(inputStream = inputStream, times = 1)
+        stream128Bytes(inputStream = inputStream, times = 49)
         advanceUntilIdle()
         verify(exactly = 0) { fourierTransformHelper.getPeakFrequency(any()) }
     }
 
     @Test
-    fun `display peak frequency using fft utils given tuning started and 256 bytes received`() = runTest {
+    fun `display peak frequency using fft utils given tuning started and 6400 bytes received`() = runTest {
         SPECTROGRAM_OVER_TUNER = false
         val inputStream = mockk<InputStream>(relaxed = true)
         val peakFrequency = 40.0
         every { fourierTransformHelper.getPeakFrequency(any()) } returns peakFrequency
         viewModel.startTuning(StandardTestDispatcher(testScheduler))
-        stream128Bytes(inputStream = inputStream, times = 2)
+        stream128Bytes(inputStream = inputStream, times = 50)
         advanceUntilIdle()
         verify(exactly = 1) { fourierTransformHelper.getPeakFrequency(any()) }
         assertThat(viewModel.leadingFrequency.value, `is`(40.0))
     }
 
     @Test
-    fun `do not start FT computation while there are less than 256 bytes during spectrogram`() = runTest {
+    fun `do not start FT computation while there are less than 6400 bytes during spectrogram`() = runTest {
         SPECTROGRAM_OVER_TUNER = true
         val inputStream = mockk<InputStream>(relaxed = true)
         viewModel.startTuning(StandardTestDispatcher(testScheduler))
-        stream128Bytes(inputStream = inputStream, times = 1)
+        stream128Bytes(inputStream = inputStream, times = 49)
         advanceUntilIdle()
         verify(exactly = 0) { fourierTransformHelper.getSpectrogram(any()) }
     }
 
     @Test
-    fun `display spectrogram using fft utils given spectrogram started and 256 bytes received`() = runTest {
+    fun `display spectrogram using fft utils given spectrogram started and 6400 bytes received`() = runTest {
         SPECTROGRAM_OVER_TUNER = true
         val inputStream = mockk<InputStream>(relaxed = true)
-        every { fourierTransformHelper.getSpectrogram(any()) } returns List(256) { 0.0 }
+        every { fourierTransformHelper.getSpectrogram(any()) } returns List(6400) { 0.0 }
         viewModel.startTuning(StandardTestDispatcher(testScheduler))
-        stream128Bytes(inputStream = inputStream, times = 2)
+        stream128Bytes(inputStream = inputStream, times = 50)
         advanceUntilIdle()
         verify(exactly = 1) { fourierTransformHelper.getSpectrogram(any()) }
-        assertThat(viewModel.spectrogram.value, `is`(List(256) { 0.0 } ))
+        assertThat(viewModel.spectrogram.value, `is`(List(6400) { 0.0 } ))
     }
 
     private fun TestScope.stream128Bytes(audioTrack: AudioTrack = mockk(relaxed = true),

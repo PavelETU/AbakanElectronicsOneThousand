@@ -175,7 +175,7 @@ class MainViewModel @Inject constructor(
             var dataInTimeDomain = ByteArray(0)
             while (tuning) {
                 dataInTimeDomain += fftChannel.receive()
-                if (dataInTimeDomain.size == 256) {
+                if (dataInTimeDomain.size == FFT_SAMPLE_SIZE) {
                     if (SPECTROGRAM_OVER_TUNER) {
                         val spector = fourierTransformHelper.getSpectrogram(dataInTimeDomain)
                         spectrogram.emit(spector)
