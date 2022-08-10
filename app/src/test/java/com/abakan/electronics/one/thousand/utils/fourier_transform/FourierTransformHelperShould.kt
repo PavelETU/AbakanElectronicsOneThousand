@@ -1,4 +1,4 @@
-package com.abakan.electronics.one.thousand.utils.forier_transform
+package com.abakan.electronics.one.thousand.utils.fourier_transform
 
 import com.abakan.electronics.one.thousand.utils.fourier_transform.FourierTransform
 import com.abakan.electronics.one.thousand.utils.fourier_transform.FourierTransformHelperImpl

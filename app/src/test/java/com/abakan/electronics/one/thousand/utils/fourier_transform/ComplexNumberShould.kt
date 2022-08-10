@@ -1,20 +1,19 @@
-package com.abakan.electronics.one.thousand.utils.forier_transform
+package com.abakan.electronics.one.thousand.utils.fourier_transform
 
-import com.abakan.electronics.one.thousand.utils.fourier_transform.ComplexNumber
-import junit.framework.Assert.assertEquals
+import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class ComplexNumberShould {
 
     @Test
     fun `return absolute value (or magnitude) when converting to real numbers`() {
-        assertEquals(6.324555320336759, ComplexNumber(2.0, 6.0).toDouble())
-        assertEquals(6, ComplexNumber(2.0, 6.0).toByte())
+        assertEquals(6.324555320336759, ComplexNumber(2.0, 6.0).toDouble(), 0.0)
+        assertEquals(6.toByte(), ComplexNumber(2.0, 6.0).toByte())
         assertEquals(6.toChar(), ComplexNumber(2.0, 6.0).toChar())
         assertEquals(6.3245554F, ComplexNumber(2.0, 6.0).toFloat())
         assertEquals(6, ComplexNumber(2.0, 6.0).toInt())
         assertEquals(6, ComplexNumber(2.0, 6.0).toLong())
-        assertEquals(6, ComplexNumber(2.0, 6.0).toShort())
+        assertEquals(6.toShort(), ComplexNumber(2.0, 6.0).toShort())
     }
 
     @Test
