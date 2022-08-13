@@ -37,7 +37,7 @@ class MainViewModel @Inject constructor(
     private var recording = false
     private var shouldSendBytesForRecord = false
     val disappearingMessage = MutableSharedFlow<ResourceWithFormatting>()
-    val outputMessage = MutableStateFlow(ResourceWithFormatting(R.string.app_name, " for $READABLE_NAME_OF_THE_DEVICE"))
+    val outputMessage = MutableStateFlow(ResourceWithFormatting(R.string.app_name, " for $NAME_OF_THE_DEVICE"))
     val recordingButtonResource = MutableStateFlow(R.string.record)
     val showTuner = MutableStateFlow(false)
     val leadingFrequency = MutableStateFlow(0.0)
@@ -49,9 +49,9 @@ class MainViewModel @Inject constructor(
     fun onBluetoothEnabledOrDeviceBonded(bluetoothAdapter: BluetoothAdapter) {
         this.bluetoothAdapter = bluetoothAdapter
         if (bluetoothAdapter.bondedDevices.none { it.name.contains(NAME_OF_THE_DEVICE) }) {
-            outputMessage.tryEmit(ResourceWithFormatting(R.string.no_device_paired, READABLE_NAME_OF_THE_DEVICE))
+            outputMessage.tryEmit(ResourceWithFormatting(R.string.no_device_paired, NAME_OF_THE_DEVICE))
         } else {
-            outputMessage.tryEmit(ResourceWithFormatting(R.string.ready_to_connect, READABLE_NAME_OF_THE_DEVICE))
+            outputMessage.tryEmit(ResourceWithFormatting(R.string.ready_to_connect, NAME_OF_THE_DEVICE))
         }
     }
 
