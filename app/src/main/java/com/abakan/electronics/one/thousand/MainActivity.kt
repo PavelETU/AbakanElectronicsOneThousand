@@ -235,9 +235,9 @@ private fun pairNewDevice(
     companionDeviceManager.associate(
         pairingRequest,
         object : CompanionDeviceManager.Callback() {
-            override fun onDeviceFound(chooserLauncher: IntentSender?) {
+            override fun onDeviceFound(chooserLauncher: IntentSender) {
                 registerToPairDevice.launch(
-                    IntentSenderRequest.Builder(chooserLauncher!!).build()
+                    IntentSenderRequest.Builder(chooserLauncher).build()
                 )
             }
 

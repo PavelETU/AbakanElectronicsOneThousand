@@ -21,5 +21,6 @@
     <string name="recording_completed">Recording completed</string>
     <string name="tune">Tune</string>
     <string name="close_tuner">Close Tuner</string>
+    <string name="close_spectrogram">Close Spectrogram</string>
     <string name="spectrogram">Spectrogram</string>
 </resources>

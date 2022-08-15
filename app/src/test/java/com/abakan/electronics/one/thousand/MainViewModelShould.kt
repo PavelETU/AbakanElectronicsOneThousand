@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.*
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -242,7 +243,141 @@ class MainViewModelShould {
         stream128Bytes(inputStream = inputStream, times = 50)
         advanceUntilIdle()
         verify(exactly = 1) { fourierTransformHelper.getSpectrogram(any()) }
+        assertThat(viewModel.spectrogram.value.size, `is`(6400))
         assertThat(viewModel.spectrogram.value, `is`(List(6400) { 0.0 } ))
+    }
+
+    @Test
+    fun `display all frequencies in spectrogram by default`() = runTest {
+        SPECTROGRAM_OVER_TUNER = true
+        val inputStream = mockk<InputStream>(relaxed = true)
+        every { fourierTransformHelper.getSpectrogram(any()) } returns List(FFT_SAMPLE_SIZE) { 0.0 }
+        viewModel.startTuning(StandardTestDispatcher(testScheduler))
+        stream128Bytes(inputStream = inputStream, times = 50)
+        advanceUntilIdle()
+        assertEquals("0.0", viewModel.spectrumStart.value)
+        assertEquals("3999.375", viewModel.spectrumEnd.value)
+        assertThat(viewModel.spectrogram.value.size, `is`(FFT_SAMPLE_SIZE))
+    }
+
+    @Test
+    fun `display half of the spectrum given 2000Hz selected as a min value`() = runTest {
+        SPECTROGRAM_OVER_TUNER = true
+        FFT_SAMPLE_SIZE = 10
+        BUFFER_SIZE = 10
+        val viewModel = MainViewModel(audioTrackProvider, fourierTransformHelper)
+        this@MainViewModelShould.viewModel = viewModel
+        val inputStream = mockk<InputStream>(relaxed = true)
+        val bytes = ByteArray(10) { 0 }
+        every { fourierTransformHelper.getSpectrogram(any()) } returns List(10) { it.toDouble() }
+        viewModel.startTuning(StandardTestDispatcher(testScheduler))
+        viewModel.setMinSpectrumFrequency("2000.0")
+        stream128Bytes(inputStream = inputStream, bytesToWrite = bytes)
+        advanceUntilIdle()
+        FFT_SAMPLE_SIZE = 6400
+        BUFFER_SIZE = 128
+        assertEquals("2000.0", viewModel.spectrumStart.value)
+        assertEquals("3600.0", viewModel.spectrumEnd.value)
+        assertThat(viewModel.spectrogram.value.size, `is`(5))
+        assertEquals(5.0, viewModel.spectrogram.value[0], 0.0)
+        assertEquals(6.0, viewModel.spectrogram.value[1], 0.0)
+        assertEquals(7.0, viewModel.spectrogram.value[2], 0.0)
+        assertEquals(8.0, viewModel.spectrogram.value[3], 0.0)
+        assertEquals(9.0, viewModel.spectrogram.value[4], 0.0)
+    }
+
+    @Test
+    fun `display half of the spectrum + 1 sample given 2000Hz selected as a max value`() = runTest {
+        SPECTROGRAM_OVER_TUNER = true
+        FFT_SAMPLE_SIZE = 10
+        BUFFER_SIZE = 10
+        val viewModel = MainViewModel(audioTrackProvider, fourierTransformHelper)
+        this@MainViewModelShould.viewModel = viewModel
+        val inputStream = mockk<InputStream>(relaxed = true)
+        val bytes = ByteArray(10) { 0 }
+        every { fourierTransformHelper.getSpectrogram(any()) } returns List(10) { it.toDouble() }
+        viewModel.startTuning(StandardTestDispatcher(testScheduler))
+        viewModel.setMaxSpectrumFrequency("2000.0")
+        stream128Bytes(inputStream = inputStream, bytesToWrite = bytes)
+        advanceUntilIdle()
+        FFT_SAMPLE_SIZE = 6400
+        BUFFER_SIZE = 128
+        assertEquals("0.0", viewModel.spectrumStart.value)
+        assertEquals("2000.0", viewModel.spectrumEnd.value)
+        assertThat(viewModel.spectrogram.value.size, `is`(6))
+        assertEquals(0.0, viewModel.spectrogram.value[0], 0.0)
+        assertEquals(1.0, viewModel.spectrogram.value[1], 0.0)
+        assertEquals(2.0, viewModel.spectrogram.value[2], 0.0)
+        assertEquals(3.0, viewModel.spectrogram.value[3], 0.0)
+        assertEquals(4.0, viewModel.spectrogram.value[4], 0.0)
+        assertEquals(4.0, viewModel.spectrogram.value[4], 0.0)
+        assertEquals(5.0, viewModel.spectrogram.value[5], 0.0)
+    }
+
+    @Test
+    fun `preselect previous frequency value given frequency between samples chosen as a min value - right edge case`() = runTest {
+        SPECTROGRAM_OVER_TUNER = true
+        FFT_SAMPLE_SIZE = 10
+        BUFFER_SIZE = 10
+        val viewModel = MainViewModel(audioTrackProvider, fourierTransformHelper)
+        this@MainViewModelShould.viewModel = viewModel
+        val inputStream = mockk<InputStream>(relaxed = true)
+        val bytes = ByteArray(10) { 0 }
+        every { fourierTransformHelper.getSpectrogram(any()) } returns List(10) { it.toDouble() }
+        viewModel.startTuning(StandardTestDispatcher(testScheduler))
+        viewModel.setMinSpectrumFrequency("799.9999")
+        stream128Bytes(inputStream = inputStream, bytesToWrite = bytes)
+        advanceUntilIdle()
+        FFT_SAMPLE_SIZE = 6400
+        BUFFER_SIZE = 128
+        assertEquals("400.0", viewModel.spectrumStart.value)
+        assertEquals("3600.0", viewModel.spectrumEnd.value)
+        assertThat(viewModel.spectrogram.value.size, `is`(9))
+        assertEquals(1.0, viewModel.spectrogram.value[0], 0.0)
+    }
+
+    @Test
+    fun `preselect previous frequency value given frequency between samples chosen as a min value - left edge case`() = runTest {
+        SPECTROGRAM_OVER_TUNER = true
+        FFT_SAMPLE_SIZE = 10
+        BUFFER_SIZE = 10
+        val viewModel = MainViewModel(audioTrackProvider, fourierTransformHelper)
+        this@MainViewModelShould.viewModel = viewModel
+        val inputStream = mockk<InputStream>(relaxed = true)
+        val bytes = ByteArray(10) { 0 }
+        every { fourierTransformHelper.getSpectrogram(any()) } returns List(10) { it.toDouble() }
+        viewModel.startTuning(StandardTestDispatcher(testScheduler))
+        viewModel.setMinSpectrumFrequency("400.001")
+        stream128Bytes(inputStream = inputStream, bytesToWrite = bytes)
+        advanceUntilIdle()
+        FFT_SAMPLE_SIZE = 6400
+        BUFFER_SIZE = 128
+        assertEquals("400.0", viewModel.spectrumStart.value)
+        assertEquals("3600.0", viewModel.spectrumEnd.value)
+        assertThat(viewModel.spectrogram.value.size, `is`(9))
+        assertEquals(1.0, viewModel.spectrogram.value[0], 0.0)
+    }
+
+    @Test
+    fun `preselect next frequency value given frequency between samples chosen as a max value - right edge case`() = runTest {
+        SPECTROGRAM_OVER_TUNER = true
+        FFT_SAMPLE_SIZE = 10
+        BUFFER_SIZE = 10
+        val viewModel = MainViewModel(audioTrackProvider, fourierTransformHelper)
+        this@MainViewModelShould.viewModel = viewModel
+        val inputStream = mockk<InputStream>(relaxed = true)
+        val bytes = ByteArray(10) { 0 }
+        every { fourierTransformHelper.getSpectrogram(any()) } returns List(10) { it.toDouble() }
+        viewModel.startTuning(StandardTestDispatcher(testScheduler))
+        viewModel.setMaxSpectrumFrequency("3199.999")
+        stream128Bytes(inputStream = inputStream, bytesToWrite = bytes)
+        advanceUntilIdle()
+        FFT_SAMPLE_SIZE = 6400
+        BUFFER_SIZE = 128
+        assertEquals("0.0", viewModel.spectrumStart.value)
+        assertEquals("3200.0", viewModel.spectrumEnd.value)
+        assertThat(viewModel.spectrogram.value.size, `is`(9))
+        assertEquals(8.0, viewModel.spectrogram.value.last(), 0.0)
     }
 
     private fun TestScope.stream128Bytes(audioTrack: AudioTrack = mockk(relaxed = true),

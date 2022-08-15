@@ -42,6 +42,11 @@ class MainViewModel @Inject constructor(
     val showTuner = MutableStateFlow(false)
     val leadingFrequency = MutableStateFlow(0.0)
     val spectrogram = MutableStateFlow(listOf<Double>())
+    val spectrumStart = MutableStateFlow("0.0")
+    val spectrumEnd = MutableStateFlow("${SAMPLE_RATE.toDouble() - (SAMPLE_RATE.toDouble() / FFT_SAMPLE_SIZE.toDouble())}")
+    val maxFrequency = MutableStateFlow(0.0)
+    private var minSpectrumIndex = 0
+    private var maxSpectrumIndex = FFT_SAMPLE_SIZE - 1
     @VisibleForTesting
     val fftChannel = Channel<ByteArray>(4000)
     private var tuning = false
@@ -80,7 +85,7 @@ class MainViewModel @Inject constructor(
                 outputMessage.emit(ResourceWithFormatting(R.string.device_connected))
                 val inputStream = bluetoothSocket!!.inputStream
                 var overallBytes = 0L
-                val bytes = ByteArray(128)
+                val bytes = ByteArray(BUFFER_SIZE)
                 var seconds = System.currentTimeMillis() / 1000
                 while (true) {
                     try {
@@ -178,7 +183,8 @@ class MainViewModel @Inject constructor(
                 if (dataInTimeDomain.size == FFT_SAMPLE_SIZE) {
                     if (SPECTROGRAM_OVER_TUNER) {
                         val spector = fourierTransformHelper.getSpectrogram(dataInTimeDomain)
-                        spectrogram.emit(spector)
+                        spectrogram.emit(spector.subList(minSpectrumIndex, maxSpectrumIndex + 1))
+                        maxFrequency.emit((spectrogram.value.indexOf(spectrogram.value.max()) + minSpectrumIndex) * (SAMPLE_RATE.toDouble() / FFT_SAMPLE_SIZE.toDouble()))
                     } else {
                         val peakFrequency = fourierTransformHelper.getPeakFrequency(dataInTimeDomain)
                         leadingFrequency.emit(peakFrequency)
@@ -192,5 +198,33 @@ class MainViewModel @Inject constructor(
     fun tuningDismissed() {
         showTuner.tryEmit(false)
         tuning = false
+    }
+
+    fun setMinSpectrumFrequency(minFrequency: String) {
+        val newMinFrequency = minFrequency.toDouble()
+        val resolution = SAMPLE_RATE.toDouble() / FFT_SAMPLE_SIZE.toDouble()
+        val closestIndex = (newMinFrequency / resolution).toInt()
+        minSpectrumIndex = if (closestIndex * resolution <= newMinFrequency && (closestIndex + 1) * resolution > newMinFrequency) {
+            closestIndex
+        } else if ((closestIndex + 1) * resolution <= newMinFrequency) {
+            closestIndex + 1
+        } else {
+            (closestIndex - 1).takeIf { it >= 0 } ?: 0
+        }
+        spectrumStart.tryEmit((minSpectrumIndex * resolution).toString())
+    }
+
+    fun setMaxSpectrumFrequency(maxFrequency: String) {
+        val newMaxFrequency = maxFrequency.toDouble()
+        val resolution = SAMPLE_RATE.toDouble() / FFT_SAMPLE_SIZE.toDouble()
+        val closestIndex = (newMaxFrequency / resolution + 1).toInt()
+        maxSpectrumIndex = if (closestIndex * resolution >= newMaxFrequency && (closestIndex - 1) * resolution < newMaxFrequency) {
+            closestIndex
+        } else if ((closestIndex - 1) * resolution >= newMaxFrequency) {
+            closestIndex - 1
+        } else {
+            (closestIndex + 1).takeIf { it <= FFT_SAMPLE_SIZE } ?: FFT_SAMPLE_SIZE
+        }
+        spectrumEnd.tryEmit(((maxSpectrumIndex) * resolution).toString())
     }
 }
