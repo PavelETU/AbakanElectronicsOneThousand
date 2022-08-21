@@ -76,8 +76,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         checkBluetoothPermissions()
-        if (intent.action == Intent.ACTION_VIEW) {
-            Toast.makeText(this, "Feature ${intent.extras?.getString("feature")} called", Toast.LENGTH_LONG).show()
+        if (intent.extras?.getString("feature") == getString(R.string.connect_device_feature)) {
+            viewModel.onConnectionActionReceived()
         }
     }
 
