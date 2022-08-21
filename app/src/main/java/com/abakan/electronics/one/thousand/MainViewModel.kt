@@ -50,13 +50,19 @@ class MainViewModel @Inject constructor(
     @VisibleForTesting
     val fftChannel = Channel<ByteArray>(4000)
     private var tuning = false
+    private var connectionPending = false
 
-    fun onBluetoothEnabledOrDeviceBonded(bluetoothAdapter: BluetoothAdapter) {
+    fun onBluetoothEnabledOrDeviceBonded(bluetoothAdapter: BluetoothAdapter,
+                                         ioDispatcher: CoroutineDispatcher = Dispatchers.IO) {
         this.bluetoothAdapter = bluetoothAdapter
         if (bluetoothAdapter.bondedDevices.none { it.name.contains(NAME_OF_THE_DEVICE) }) {
             outputMessage.tryEmit(ResourceWithFormatting(R.string.no_device_paired, NAME_OF_THE_DEVICE))
         } else {
             outputMessage.tryEmit(ResourceWithFormatting(R.string.ready_to_connect, NAME_OF_THE_DEVICE))
+            if (connectionPending) {
+                connectDevice(ioDispatcher)
+                connectionPending = false
+            }
         }
     }
 
@@ -226,5 +232,9 @@ class MainViewModel @Inject constructor(
             (closestIndex + 1).takeIf { it <= FFT_SAMPLE_SIZE } ?: FFT_SAMPLE_SIZE
         }
         spectrumEnd.tryEmit(((maxSpectrumIndex) * resolution).toString())
+    }
+
+    fun onConnectionActionReceived() {
+        connectionPending = true
     }
 }

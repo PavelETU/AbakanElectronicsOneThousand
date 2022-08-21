@@ -76,7 +76,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         checkBluetoothPermissions()
         if (intent.action == Intent.ACTION_VIEW) {
-            viewModel.connectDevice()
+            viewModel.onConnectionActionReceived()
         }
     }
 

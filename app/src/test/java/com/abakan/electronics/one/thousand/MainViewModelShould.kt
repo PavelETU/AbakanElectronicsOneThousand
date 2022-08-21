@@ -20,6 +20,7 @@ import org.junit.Before
 import org.junit.Test
 import java.io.IOException
 import java.io.InputStream
+import java.net.ConnectException
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MainViewModelShould {
@@ -378,6 +379,21 @@ class MainViewModelShould {
         assertEquals("3200.0", viewModel.spectrumEnd.value)
         assertThat(viewModel.spectrogram.value.size, `is`(9))
         assertEquals(8.0, viewModel.spectrogram.value.last(), 0.0)
+    }
+
+    @Test
+    fun `connect device after obtaining manager given GA connect action triggered`() = runTest {
+        val socket = mockk<BluetoothSocket>()
+        addMyDeviceToBondedDevices()
+        every { audioTrackProvider.getAudioTrack() } returns mockk(relaxed = true)
+        every { myDevice.createRfcommSocketToServiceRecord(any()) } returns socket
+        every { socket.connect() } throws ConnectException()
+
+        viewModel.onConnectionActionReceived()
+        viewModel.onBluetoothEnabledOrDeviceBonded(bluetoothAdapter, StandardTestDispatcher(testScheduler))
+        advanceUntilIdle()
+
+        verify(exactly = 1) { socket.connect() }
     }
 
     private fun TestScope.stream128Bytes(audioTrack: AudioTrack = mockk(relaxed = true),

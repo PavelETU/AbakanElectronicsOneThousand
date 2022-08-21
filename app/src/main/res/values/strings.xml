@@ -25,7 +25,9 @@
     <string name="spectrogram">Spectrogram</string>
     
     <string-array name="device_queries">
-        <item>Connect my device</item>
-        <item>Connect Abakan Electronics</item>
+        <item>connect my device</item>
+        <item>connect Abakan Electronics</item>
+        <item>connect Abakan</item>
+        <item>connect my guitar</item>
     </string-array>
 </resources>
