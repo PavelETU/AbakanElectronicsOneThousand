@@ -10,6 +10,8 @@
             <parameter
                 android:name="feature"
                 android:key="feature"/>
+            <extra android:key="requiredForegroundActivity"
+                android:value="com.abakan.electronics.one.thousand/com.abakan.electronics.one.thousand.MainActivity" />
         </intent>
     </capability>
     <shortcut
@@ -17,6 +19,22 @@
         android:shortcutShortLabel="@string/connect">
         <capability-binding android:key="actions.intent.OPEN_APP_FEATURE" >
             <parameter-binding android:value="@array/connect_queries"
+                android:key="feature" />
+        </capability-binding>
+    </shortcut>
+    <shortcut
+        android:shortcutId="start_recording"
+        android:shortcutShortLabel="@string/record">
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE" >
+            <parameter-binding android:value="@array/record_queries"
+                android:key="feature" />
+        </capability-binding>
+    </shortcut>
+    <shortcut
+        android:shortcutId="stop_recording"
+        android:shortcutShortLabel="@string/stop_recording">
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE" >
+            <parameter-binding android:value="@array/stop_recording_queries"
                 android:key="feature" />
         </capability-binding>
     </shortcut>

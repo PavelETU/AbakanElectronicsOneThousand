@@ -69,18 +69,30 @@ class MainActivity : ComponentActivity() {
         }
 
     private fun showEnableBluetoothNextTime() {
-        Toast.makeText(this, getString(R.string.enable_bluetooth_next_time), Toast.LENGTH_LONG).show()
+        Toast.makeText(this, getString(R.string.enable_bluetooth_next_time), Toast.LENGTH_LONG)
+            .show()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         checkBluetoothPermissions()
         if (intent.action == Intent.ACTION_VIEW) {
-            if (intent.extras?.getString("feature") == getString(R.string.connect_device_feature)) {
-                Log.i("LookHere", "Connect device called")
+            Toast.makeText(this, "Feature ${intent.extras?.getString("feature")} called", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        if (intent?.action == Intent.ACTION_VIEW) {
+            when (intent.extras?.getString("feature")) {
+                getString(R.string.connect_device_feature) -> viewModel.connectDevice()
+                getString(R.string.start_recording_feature),
+                getString(R.string.stop_recording_feature) ->
+                    viewModel.startStopRecording(
+                        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)
+                    )
+                else -> Toast.makeText(this, getString(R.string.no_feature), Toast.LENGTH_SHORT).show()
             }
-            Log.i("LookHere", "Extras ${intent.extras?.getString("feature")}")
-            viewModel.onConnectionActionReceived()
         }
     }
 
@@ -166,9 +178,12 @@ private fun ControlPanel(
 }
 
 @Composable
-private fun ControlPanelInsideScaffold(bluetoothAdapter: BluetoothAdapter,
-                                       viewModel: MainViewModel = viewModel(), paddingValues: PaddingValues) {
+private fun ControlPanelInsideScaffold(
+    bluetoothAdapter: BluetoothAdapter,
+    viewModel: MainViewModel = viewModel(), paddingValues: PaddingValues
+) {
     val context = LocalContext.current
+
     @SuppressLint("MissingPermission")
     val registerToPairDevice =
         rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
@@ -179,44 +194,66 @@ private fun ControlPanelInsideScaffold(bluetoothAdapter: BluetoothAdapter,
         }
 
     ShowTunerWhenNeeded(viewModel)
-    Box(modifier = Modifier
-        .fillMaxSize()
-        .padding(paddingValues)) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)
+    ) {
         val resourceWithFormatting = viewModel.outputMessage.collectAsState().value
         Row(
             Modifier
                 .fillMaxWidth()
                 .align(Alignment.TopCenter)
-                .padding(top = 20.dp), horizontalArrangement = Arrangement.Center) {
-            Button(onClick = { viewModel.startStopRecording(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)) },
+                .padding(top = 20.dp), horizontalArrangement = Arrangement.Center
+        ) {
+            Button(
+                onClick = {
+                    viewModel.startStopRecording(
+                        Environment.getExternalStoragePublicDirectory(
+                            Environment.DIRECTORY_MUSIC
+                        )
+                    )
+                },
                 modifier = Modifier
                     .weight(1.0F)
-                    .padding(8.dp)) {
+                    .padding(8.dp)
+            ) {
                 Text(text = stringResource(id = viewModel.recordingButtonResource.collectAsState().value))
             }
-            Button(onClick = { viewModel.startTuning() },
+            Button(
+                onClick = { viewModel.startTuning() },
                 modifier = Modifier
                     .weight(1.0F)
-                    .padding(8.dp)) {
+                    .padding(8.dp)
+            ) {
                 Text(text = stringResource(if (SPECTROGRAM_OVER_TUNER) R.string.spectrogram else R.string.tune))
             }
         }
-        Text(text = resourceWithFormatting.getStringForCompose(), Modifier.align(Alignment.Center), textAlign = TextAlign.Center)
+        Text(
+            text = resourceWithFormatting.getStringForCompose(),
+            Modifier.align(Alignment.Center),
+            textAlign = TextAlign.Center
+        )
         Row(
             Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 10.dp)) {
-            Button(onClick = { pairNewDevice(context, registerToPairDevice) },
+                .padding(bottom = 10.dp)
+        ) {
+            Button(
+                onClick = { pairNewDevice(context, registerToPairDevice) },
                 Modifier
                     .weight(1f)
-                    .padding(8.dp)) {
+                    .padding(8.dp)
+            ) {
                 Text(text = stringResource(id = R.string.pair_new_device))
             }
-            Button(onClick = { viewModel.connectDevice() },
+            Button(
+                onClick = { viewModel.connectDevice() },
                 Modifier
                     .weight(1f)
-                    .padding(8.dp)) {
+                    .padding(8.dp)
+            ) {
                 Text(text = stringResource(id = R.string.connect))
             }
         }

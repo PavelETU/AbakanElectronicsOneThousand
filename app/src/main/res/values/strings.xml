@@ -24,7 +24,10 @@
     <string name="close_spectrogram">Close Spectrogram</string>
     <string name="spectrogram">Spectrogram</string>
     <string name="connect_device_feature">connect_device</string>
-    
+    <string name="start_recording_feature">start_recording</string>
+    <string name="stop_recording_feature">stop_recording</string>
+    <string name="no_feature">Can\'t recognise a command. Try something different</string>
+
     <string-array name="connect_queries">
         <item>connect my device</item>
         <item>connect Abakan Electronics</item>
@@ -38,5 +41,23 @@
         <item>and connect guitar</item>
         <item>and connect my device</item>
         <item>and connect Abakan Electronics</item>
+    </string-array>
+    <string-array name="record_queries">
+        <item>record</item>
+        <item>start recording</item>
+        <item>make a recording</item>
+        <item>and record</item>
+        <item>and start recording</item>
+        <item>and make a recording</item>
+    </string-array>
+    <string-array name="stop_recording_queries">
+        <item>stop record</item>
+        <item>stop recording</item>
+        <item>stop making a recording</item>
+        <item>stop</item>
+        <item>and stop record</item>
+        <item>and stop recording</item>
+        <item>and stop making a recording</item>
+        <item>and stop</item>
     </string-array>
 </resources>
