@@ -15,6 +15,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.ManagedActivityResultLauncher
@@ -23,6 +24,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -35,6 +37,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.abakan.electronics.one.thousand.theme.AbakanElectronicsTheme
 import com.abakan.electronics.one.thousand.utils.getStringForCompose
@@ -46,6 +49,7 @@ import java.util.regex.Pattern
 class MainActivity : ComponentActivity() {
 
     private lateinit var bluetoothAdapter: BluetoothAdapter
+    private val viewModel: MainViewModel by viewModels()
 
     private val registerToGrantPermission =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
@@ -71,6 +75,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         checkBluetoothPermissions()
+        if (intent.action == Intent.ACTION_VIEW) {
+            viewModel.connectDevice()
+        }
     }
 
     private fun checkBluetoothPermissions() {
@@ -123,7 +130,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    ControlPanel(bluetoothAdapter)
+                    ControlPanel(bluetoothAdapter, viewModel)
                 }
             }
         }

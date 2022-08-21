@@ -23,4 +23,9 @@
     <string name="close_tuner">Close Tuner</string>
     <string name="close_spectrogram">Close Spectrogram</string>
     <string name="spectrogram">Spectrogram</string>
+    
+    <string-array name="device_queries">
+        <item>Connect my device</item>
+        <item>Connect Abakan Electronics</item>
+    </string-array>
 </resources>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <capability
+        android:name="custom.actions.intent.CONNECT_DEVICE"
+        app:queryPatterns="@array/device_queries">
+        <intent
+            android:targetClass="com.abakan.electronics.one.thousand.MainActivity"
+            android:targetPackage="com.abakan.electronics.one.thousand">
+        </intent>
+    </capability>
+</shortcuts>
