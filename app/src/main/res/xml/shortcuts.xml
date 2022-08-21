@@ -2,17 +2,22 @@
 <shortcuts xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <capability
-        android:name="custom.actions.intent.CONNECT_DEVICE"
-        app:queryPatterns="@array/device_queries">
+        android:name="actions.intent.OPEN_APP_FEATURE">
         <intent
             android:action="android.intent.action.VIEW"
             android:targetClass="com.abakan.electronics.one.thousand.MainActivity"
             android:targetPackage="com.abakan.electronics.one.thousand">
+            <parameter
+                android:name="feature"
+                android:key="feature"/>
         </intent>
     </capability>
     <shortcut
-        android:shortcutId="CONNECTING_DEVICE"
+        android:shortcutId="connect_device"
         android:shortcutShortLabel="@string/connect">
-        <capability-binding android:key="custom.actions.intent.CONNECT_DEVICE" />
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE" >
+            <parameter-binding android:value="@array/connect_queries"
+                android:key="feature" />
+        </capability-binding>
     </shortcut>
 </shortcuts>

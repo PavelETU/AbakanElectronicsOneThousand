@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Abakan Electronics 1000</string>
+    <string name="app_name">Amplifier</string>
     <string name="pair_new_device">Pair device</string>
     <string name="connect">Connect</string>
     <string name="no_device_paired">You don\'t have any %1$s devices paired. Turn on the device
@@ -23,11 +23,20 @@
     <string name="close_tuner">Close Tuner</string>
     <string name="close_spectrogram">Close Spectrogram</string>
     <string name="spectrogram">Spectrogram</string>
+    <string name="connect_device_feature">connect_device</string>
     
-    <string-array name="device_queries">
+    <string-array name="connect_queries">
         <item>connect my device</item>
         <item>connect Abakan Electronics</item>
         <item>connect Abakan</item>
         <item>connect my guitar</item>
+        <item>connect to my guitar</item>
+        <item>connect guitar</item>
+        <item>start playing</item>
+        <item>connect</item>
+        <item>and connect my guitar</item>
+        <item>and connect guitar</item>
+        <item>and connect my device</item>
+        <item>and connect Abakan Electronics</item>
     </string-array>
 </resources>
