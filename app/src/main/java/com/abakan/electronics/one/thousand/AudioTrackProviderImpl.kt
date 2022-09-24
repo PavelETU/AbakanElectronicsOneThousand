@@ -13,7 +13,7 @@ class AudioTrackProviderImpl @Inject constructor(): AudioTrackProvider {
             )
                 .build()
         ).setTransferMode(AudioTrack.MODE_STREAM).setAudioFormat(
-            AudioFormat.Builder().setEncoding(AudioFormat.ENCODING_PCM_8BIT).setSampleRate(4000)
+            AudioFormat.Builder().setEncoding(AudioFormat.ENCODING_PCM_8BIT).setSampleRate(SAMPLE_RATE)
                 .build()
         )
             .setBufferSizeInBytes(160)
