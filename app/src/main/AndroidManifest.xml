@@ -3,21 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.abakan.electronics.one.thousand">
 
-    <uses-permission
-        android:name="android.permission.BLUETOOTH"
-        android:maxSdkVersion="30" />
-    <uses-permission
-        android:name="android.permission.BLUETOOTH_ADMIN"
-        android:maxSdkVersion="30" />
-    <uses-permission
-        android:name="android.permission.BLUETOOTH_SCAN"
-        android:usesPermissionFlags="neverForLocation" />
-    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
-
-    <uses-feature
-        android:name="android.hardware.bluetooth"
-        android:required="true" />
-    <uses-feature android:name="android.software.companion_device_setup" />
+    <uses-feature android:name="android.hardware.audio.output" android:required="true" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 
     <application
         android:name=".di.AbakanElectronicsApp"

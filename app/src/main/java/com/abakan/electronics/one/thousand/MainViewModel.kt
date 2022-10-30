@@ -1,13 +1,17 @@
 package com.abakan.electronics.one.thousand
 
 import android.annotation.SuppressLint
-import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothSocket
-import android.media.AudioTrack
+import android.app.Application
+import android.content.Context
+import android.media.AudioFormat
+import android.media.AudioManager
+import android.media.AudioRecord
+import android.media.MediaRecorder
 import android.net.Uri
 import android.util.Log
 import androidx.annotation.RestrictTo
 import androidx.annotation.VisibleForTesting
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.abakan.electronics.one.thousand.utils.HeaderForWavFile
@@ -28,22 +32,29 @@ import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
 
+
+// For Samsung SM-A125F speaker Sample rate: 48,000
+// FramesPerBuffer: 256
+// For Pixel 6a speaker Sample rate: 48,000
+// FramesPerBuffer: 128
+
+// AE Receiver
+
+private const val USB_DEVICE_NAME = "USB-Audio - AE Receiver"
+
+
 @OptIn(ExperimentalCoroutinesApi::class)
 @SuppressLint("MissingPermission")
 @HiltViewModel
-class MainViewModel @Inject constructor(
+class MainViewModel @Inject constructor(application: Application,
     private val audioTrackProvider: AudioTrackProvider,
     private val fourierTransformHelper: FourierTransformHelper
-) : ViewModel() {
-    private var bluetoothAdapter: BluetoothAdapter? = null
-    private var bluetoothSocket: BluetoothSocket? = null
-    private var audioTrack: AudioTrack? = null
+) : AndroidViewModel(application) {
     private val audioChannel = Channel<ByteArray>(4000)
     private var recording = false
-    private var shouldSendBytesForRecord = false
     val disappearingMessage = MutableSharedFlow<ResourceWithFormatting>()
     val outputMessage =
-        MutableStateFlow(ResourceWithFormatting(R.string.app_name, " for $NAME_OF_THE_DEVICE"))
+        MutableStateFlow(ResourceWithFormatting(R.string.ready_to_connect, "$NAME_OF_THE_DEVICE"))
     val recordingButtonResource = MutableStateFlow(R.string.record)
     val showTuner = MutableStateFlow(false)
     val leadingFrequency = MutableStateFlow(0.0)
@@ -54,113 +65,51 @@ class MainViewModel @Inject constructor(
     val maxFrequency = MutableStateFlow(0.0)
     private var minSpectrumIndex = 0
     private var maxSpectrumIndex = FFT_SAMPLE_SIZE - 1
+    private var audioRecord: AudioRecord? = null
 
     @VisibleForTesting
     val fftChannel = Channel<ByteArray>(4000)
     private var tuning = false
     private var connectionPending = false
+    private var streaming = false
+    private val ampLibrary = AmpLibrary()
+    private val audioManager = application.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+    val mainButtonTitle = MutableStateFlow("Connect")
 
-    fun onBluetoothEnabledOrDeviceBonded(
-        bluetoothAdapter: BluetoothAdapter,
-        ioDispatcher: CoroutineDispatcher = Dispatchers.IO
-    ) {
-        this.bluetoothAdapter = bluetoothAdapter
-        if (bluetoothAdapter.bondedDevices.none { it.name.contains(NAME_OF_THE_DEVICE) }) {
-            outputMessage.tryEmit(
-                ResourceWithFormatting(
-                    R.string.no_device_paired,
-                    NAME_OF_THE_DEVICE
-                )
-            )
+
+    init {
+        val sampleRate = audioManager.getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE)
+        val framesPerBuffer = audioManager.getProperty(AudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER)
+        ampLibrary.setDefaultParams(sampleRate.toInt(), framesPerBuffer.toInt())
+    }
+
+    fun connectDisconnectDevice() {
+        if (!streaming) {
+            val inputDevices = audioManager.getDevices(AudioManager.GET_DEVICES_INPUTS)
+            val aeReceiver = inputDevices.find { it.productName == USB_DEVICE_NAME }
+            if (aeReceiver == null) {
+                outputMessage.tryEmit(ResourceWithFormatting(R.string.not_attached, null))
+                return
+            }
+            val streamStarted = ampLibrary.startStreamingFrom(aeReceiver.id)
+            if (!streamStarted) {
+                outputMessage.tryEmit(ResourceWithFormatting(R.string.error_creating_stream, null))
+                return
+            }
+            mainButtonTitle.tryEmit("Disconnect")
         } else {
-            outputMessage.tryEmit(
-                ResourceWithFormatting(
-                    R.string.ready_to_connect,
-                    NAME_OF_THE_DEVICE
-                )
-            )
-            if (connectionPending) {
-                connectDevice(ioDispatcher)
-                connectionPending = false
-            }
+            stopStream()
+            mainButtonTitle.tryEmit("Connect")
         }
+        streaming = !streaming
     }
 
-    // Suppress warning since Android Studio doesn't know ioDispatcher is always ioDispatcher when running the app
-    @Suppress("BlockingMethodInNonBlockingContext")
-    fun connectDevice(ioDispatcher: CoroutineDispatcher = Dispatchers.IO) {
-        viewModelScope.launch(ioDispatcher) {
-            if (bluetoothAdapter == null) {
-                disappearingMessage.emit(
-                    ResourceWithFormatting(
-                        R.string.bluetooth_was_not_enabled,
-                        null
-                    )
-                )
-                return@launch
-            }
-            bluetoothAdapter!!.cancelDiscovery()
-            val device =
-                bluetoothAdapter!!.bondedDevices.filter { it.name.contains(NAME_OF_THE_DEVICE) }
-                    .getOrNull(0)
-            if (device == null) {
-                disappearingMessage.emit(ResourceWithFormatting(R.string.no_device_found))
-                return@launch
-            }
-            prepareAudioTrack()
-            bluetoothSocket =
-                device.createRfcommSocketToServiceRecord(DEFAULT_UUID_FOR_CUSTOM_DEVICES)
-            try {
-                outputMessage.emit(ResourceWithFormatting(R.string.connecting_device))
-                bluetoothSocket!!.connect()
-                outputMessage.emit(ResourceWithFormatting(R.string.device_connected))
-                val inputStream = bluetoothSocket!!.inputStream
-                var overallBytes = 0L
-                val bytes = ByteArray(BUFFER_SIZE)
-                var seconds = System.currentTimeMillis() / 1000
-                while (true) {
-                    try {
-                        inputStream.read(bytes)
-                    } catch (t: Throwable) {
-                        disappearingMessage.emit(
-                            ResourceWithFormatting(
-                                R.string.stream_was_interrupted,
-                                null
-                            )
-                        )
-                        outputMessage.emit(ResourceWithFormatting(R.string.device_not_connected))
-                        break
-                    }
-                    if (shouldSendBytesForRecord) {
-                        audioChannel.send(bytes.copyOf())
-                    }
-                    if (tuning) {
-                        fftChannel.send(bytes.copyOf())
-                    }
-                    overallBytes++
-                    val newSeconds = System.currentTimeMillis() / 1000
-                    if (newSeconds > seconds) {
-                        Log.i("BytesPerSecond", overallBytes.toString())
-                        overallBytes = 0
-                        seconds = newSeconds
-                    }
-                    audioTrack!!.write(bytes, 0, bytes.size)
-                }
-            } catch (t: Throwable) {
-                outputMessage.emit(ResourceWithFormatting(R.string.device_not_connected))
-                disappearingMessage.emit(
-                    ResourceWithFormatting(
-                        R.string.error_while_connecting,
-                        null
-                    )
-                )
-            }
-        }
+    private fun stopStream() {
+        ampLibrary.stopStreaming()
     }
 
-    private fun prepareAudioTrack() {
-        audioTrack = audioTrackProvider.getAudioTrack()
-        audioTrack!!.play()
+    override fun onCleared() {
+        stopStream()
     }
 
     fun startStopRecording(dir: File) {
@@ -174,20 +123,28 @@ class MainViewModel @Inject constructor(
     }
 
     private fun startRecording(dir: File) {
+        audioRecord = AudioRecord.Builder().setAudioSource(MediaRecorder.AudioSource.MIC)
+            .setAudioFormat(
+                AudioFormat.Builder().setSampleRate(
+                    SAMPLE_RATE
+                ).setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                    .setChannelMask(AudioFormat.CHANNEL_IN_STEREO).build()
+            ).setBufferSizeInBytes(
+                BUFFER_SIZE
+            ).build()
+        val buffer = ByteArray(BUFFER_SIZE)
+        audioRecord!!.startRecording()
         viewModelScope.launch(Dispatchers.IO) {
             outputMessage.emit(ResourceWithFormatting(R.string.recording_started, null))
             recording = true
-            shouldSendBytesForRecord = true
             var amountOfBytes = 0
             var dataByteArray = ByteArray(0)
-            while (recording || (!recording && !audioChannel.isEmpty)) {
-                val newByteArray = audioChannel.receive()
-                dataByteArray += newByteArray.shiftValuesByZeroOffset()
-                amountOfBytes += newByteArray.size
-                if (!recording) {
-                    shouldSendBytesForRecord = false
-                }
+            while (recording) {
+                audioRecord!!.read(buffer, 0, BUFFER_SIZE)
+                dataByteArray += buffer
+                amountOfBytes += buffer.size
             }
+            audioRecord!!.stop()
             val wavByteArray = HeaderForWavFile.getHeaderForWavFile(amountOfBytes) + dataByteArray
             try {
                 if (!dir.exists()) {
@@ -209,16 +166,6 @@ class MainViewModel @Inject constructor(
             } catch (t: Throwable) {
                 disappearingMessage.emit(ResourceWithFormatting(R.string.error_while_saving, null))
             }
-        }
-    }
-
-    @RestrictTo(RestrictTo.Scope.TESTS)
-    public override fun onCleared() {
-        try {
-            audioTrack?.stop()
-            bluetoothSocket?.close()
-        } catch (t: Throwable) {
-            Log.e(javaClass.name, "Can't close the socket cause ${t.message}")
         }
     }
 

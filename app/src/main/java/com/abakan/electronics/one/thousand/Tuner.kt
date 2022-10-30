@@ -13,6 +13,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
@@ -139,13 +140,15 @@ fun DrawTuner(viewModel: MainViewModel) {
     Text(text = viewModel.leadingFrequency.collectAsState().value.toString())
 }
 
-@Preview
-@Composable
-fun Preview() {
-    Spectrogram(
-        viewModel = MainViewModel(
-            AudioTrackProviderImpl(),
-            FourierTransformHelperImpl(CooleyTurkeyFFT())
-        )
-    )
-}
+//@Preview
+//@Composable
+//fun Preview() {
+//    val current = LocalContext.current
+//    Spectrogram(
+//        viewModel = MainViewModel(
+//            current,
+//            AudioTrackProviderImpl(),
+//            FourierTransformHelperImpl(CooleyTurkeyFFT())
+//        )
+//    )
+//}

@@ -27,6 +27,8 @@
     <string name="start_recording_feature">start_recording</string>
     <string name="stop_recording_feature">stop_recording</string>
     <string name="no_feature">Can\'t recognise a command. Try something different</string>
+    <string name="not_attached">AE Receiver is not attached. Please attach the device and try again</string>
+    <string name="error_creating_stream">Error while creating a stream. Please try again later</string>
 
     <string-array name="connect_queries">
         <item>connect my device</item>

@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.18.1)
+project("amplifier")
+add_library(amplifier SHARED native-lib.cpp AmplifierEngine.cpp AmplifierSystem.cpp)
+find_library(log-lib log)
+find_package (oboe REQUIRED CONFIG)
+target_link_libraries(amplifier ${log-lib} oboe::oboe android)

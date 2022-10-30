@@ -77,7 +77,7 @@ class MainViewModelShould {
 
     @Test
     fun `display bluetooth not available message given onBluetoothEnabled was not called`() = runTest {
-        viewModel.connectDevice()
+        viewModel.connectDisconnectDevice()
         assertThat(
             viewModel.disappearingMessage.first(),
             `is`(ResourceWithFormatting(R.string.bluetooth_was_not_enabled, null))
@@ -87,7 +87,7 @@ class MainViewModelShould {
     @Test
     fun `cancel discovery on BluetoothAdapter when connecting device`() = runTest {
         viewModel.onBluetoothEnabledOrDeviceBonded(bluetoothAdapter)
-        viewModel.connectDevice(StandardTestDispatcher(testScheduler))
+        viewModel.connectDisconnectDevice(StandardTestDispatcher(testScheduler))
         advanceUntilIdle()
         verify(exactly = 1) { bluetoothAdapter.cancelDiscovery() }
     }
@@ -95,7 +95,7 @@ class MainViewModelShould {
     @Test
     fun `show no device found message given no device found`() = runTest {
         viewModel.onBluetoothEnabledOrDeviceBonded(bluetoothAdapter)
-        viewModel.connectDevice()
+        viewModel.connectDisconnectDevice()
         assertThat(viewModel.disappearingMessage.first(), `is`(ResourceWithFormatting(R.string.no_device_found)))
     }
 
@@ -108,7 +108,7 @@ class MainViewModelShould {
         every { audioTrackProvider.getAudioTrack() } returns mockk(relaxed = true)
 
         viewModel.onBluetoothEnabledOrDeviceBonded(bluetoothAdapter)
-        viewModel.connectDevice(StandardTestDispatcher(testScheduler))
+        viewModel.connectDisconnectDevice(StandardTestDispatcher(testScheduler))
 
         assertThat(viewModel.disappearingMessage.first(), `is`(ResourceWithFormatting(R.string.error_while_connecting, null)))
         assertThat(viewModel.outputMessage.first(), `is`(ResourceWithFormatting(R.string.device_not_connected)))
@@ -124,7 +124,7 @@ class MainViewModelShould {
         every { socket.inputStream } throws RuntimeException()
 
         viewModel.onBluetoothEnabledOrDeviceBonded(bluetoothAdapter)
-        viewModel.connectDevice(StandardTestDispatcher(testScheduler))
+        viewModel.connectDisconnectDevice(StandardTestDispatcher(testScheduler))
 
         viewModel.outputMessage.test {
             assertThat(awaitItem(), `is`(ResourceWithFormatting(R.string.ready_to_connect)))
@@ -154,7 +154,7 @@ class MainViewModelShould {
         every { audioTrackProvider.getAudioTrack() } returns audioTrack
 
         viewModel.onBluetoothEnabledOrDeviceBonded(bluetoothAdapter)
-        viewModel.connectDevice(StandardTestDispatcher(testScheduler))
+        viewModel.connectDisconnectDevice(StandardTestDispatcher(testScheduler))
         advanceUntilIdle()
         viewModel.onCleared()
 
@@ -411,7 +411,7 @@ class MainViewModelShould {
         every { audioTrackProvider.getAudioTrack() } returns audioTrack
 
         viewModel.onBluetoothEnabledOrDeviceBonded(bluetoothAdapter)
-        viewModel.connectDevice(testDispatcher)
+        viewModel.connectDisconnectDevice(testDispatcher)
     }
 
     private fun transferByteArrayNTimesAndFinishStream(
