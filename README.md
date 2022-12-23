@@ -1,5 +1,6 @@
 # AbakanElectronicsOneThousand
 Application to connect AE device based on HC-05 via Bluetooth®.
+
 Main features:
 Connect the device via Classic Bluetooth®
 Stream music playing on the device
