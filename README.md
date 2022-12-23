@@ -11,4 +11,4 @@ MVVM, TDD (to build FFT feature), Jetpack Compose, Hilt and more
 
 Presentation:
 
-https://github.com/PavelETU/AbakanElectronicsOneThousand/raw/main/media/presentation.mov
+<img src="media/presentation.mov" width="300">
