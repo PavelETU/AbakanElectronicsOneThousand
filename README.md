@@ -10,4 +10,4 @@ Technology used:
 MVVM, TDD (to build FFT feature), Jetpack Compose, Hilt and more
 
 Presentation:
-https://github.com/PavelETU/AbakanElectronicsOneThousand/blob/main/media/presentation.mov
+https://github.com/PavelETU/AbakanElectronicsOneThousand/raw/main/media/presentation.mov
