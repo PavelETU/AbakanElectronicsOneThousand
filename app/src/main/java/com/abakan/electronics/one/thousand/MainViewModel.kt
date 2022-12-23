@@ -113,6 +113,9 @@ class MainViewModel @Inject constructor(application: Application,
     }
 
     fun startStopRecording(dir: File) {
+        if (!streaming) {
+            connectDisconnectDevice()
+        }
         if (recording) {
             recording = false
             recordingButtonResource.tryEmit(R.string.record)

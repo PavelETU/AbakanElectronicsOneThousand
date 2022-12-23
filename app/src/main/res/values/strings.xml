@@ -46,15 +46,23 @@
     </string-array>
     <string-array name="record_queries">
         <item>record</item>
+        <item>record my device</item>
+        <item>and record my device</item>
+        <item>and do the magic</item>
+        <item>do the magic</item>
+        <item>and start recording my device</item>
         <item>start recording</item>
         <item>make a recording</item>
         <item>and record</item>
         <item>and start recording</item>
         <item>and make a recording</item>
+        <item>connect my device for recording</item>
     </string-array>
     <string-array name="stop_recording_queries">
         <item>stop record</item>
         <item>stop recording</item>
+        <item>stop recording my device</item>
+        <item>and stop recording my device</item>
         <item>stop making a recording</item>
         <item>stop</item>
         <item>and stop record</item>
