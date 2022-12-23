@@ -9,6 +9,4 @@ Google Assistant support to connect and record your musical instrument
 Technology used:
 MVVM, TDD (to build FFT feature), Jetpack Compose, Hilt and more
 
-Presentation:
-
-<img src="media/presentation.mov" width="300">
+[Presentation](https://www.instagram.com/p/Cg2rbXwqTI4/)
